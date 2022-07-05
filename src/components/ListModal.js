@@ -5,19 +5,7 @@ import {
 import MaterialTable from 'material-table';
 import React from 'react';
 import { auth } from '../firebase/firebase.js';
-import { backgroundColor, textColor } from '../theme/MealPlannerTheme';
-
-const toolbar = createTheme({
-    palette: {
-        primary: {
-            main: textColor,
-        },
-        secondary: {
-            main: backgroundColor,
-        },
-    },
-
-});
+import { backgroundColor, StyledSquareButton, textColor } from '../theme/MealPlannerTheme';
 
 class ListModal extends React.Component {
     constructor(props) {
@@ -39,8 +27,9 @@ class ListModal extends React.Component {
     }
 
     render() {
-        const { classes, db } = this.props;
+        const { db } = this.props;
         const { newSelected } = this.state;
+        const defaultMaterialTheme = createTheme();
         let mealsDbRef = db.ref(`users/${this.state.user.uid}/meals`);
         let mealStateIds = newSelected.map((item) => { return item.mealId ? item.mealId : item });
         let tableData = [];
@@ -56,7 +45,7 @@ class ListModal extends React.Component {
         return (
             <div>
                 <StyledEngineProvider injectFirst>
-                    <ThemeProvider theme={toolbar}>
+                    <ThemeProvider theme={defaultMaterialTheme}>
                         <MaterialTable
                             title="Select Meals"
                             columns={[
@@ -78,8 +67,8 @@ class ListModal extends React.Component {
                     position: 'absolute', right: 0, bottom: 0, margin: '15px'
                 }}>
                     <Button style={{ marginRight: '5px' }} onClick={() => this.props.closeCallback()}>Close</Button>
-                    <Button
-                        onClick={() => this.props.confirmCallback(this.state.newSelected)}>Save</Button>
+                    <StyledSquareButton
+                        onClick={() => this.props.confirmCallback(this.state.newSelected)}>Save</StyledSquareButton>
                 </div>
             </div>
         );

@@ -1,10 +1,13 @@
 import { Dialog, IconButton, Typography } from '@mui/material';
-import { AddBox, Delete, Edit } from '@mui/icons-material';
+import { Delete, Edit } from '@mui/icons-material';
 import MaterialTable from 'material-table';
 import React from 'react';
 import MealModal from '../components/MealModal';
 import { auth, firebaseDb } from '../firebase/firebase.js';
-import { ThemeProvider, createTheme } from '@mui/material';
+import { ThemeProvider, createTheme, Container } from '@mui/material';
+import { StyledAddBox, StyledContainer, textColor } from '../theme/MealPlannerTheme';
+import SearchIcon from '@mui/icons-material/Search';
+import ClearIcon from '@mui/icons-material/Clear';
 
 class MealPage extends React.Component {
     constructor() {
@@ -114,7 +117,6 @@ class MealPage extends React.Component {
     }
 
     render() {
-        const { classes } = this.props;
         const defaultMaterialTheme = createTheme();
         const db = firebaseDb.database();
         let mealsDbRef = db.ref(`users/${this.state.user.uid}/meals`);
@@ -130,43 +132,50 @@ class MealPage extends React.Component {
 
         return (
             <div style={{ padding: '50px' }}>
-                <ThemeProvider theme={defaultMaterialTheme}>
-                    <MaterialTable
-                        title="Meal List"
-                        columns={[
-                            { title: 'Meal Title', field: 'mealTitle' },
-                            {
-                                field: 'ingredients', headerName: 'Ingredients', width: 130,
-                                render: (rowData) => this.customTableRender(rowData, db)
-                            },
-                        ]}
-                        data={tableData}
-                        options={{
-                            searching: true,
-                            maxBodyHeight: '400',
-                            paging: false
-                        }}
-                        actions={[
-                            {
-                                icon: () => <Edit />,
-                                tooltip: 'Edit',
-                                onClick: (event, rowData) => this.handleEditMeal(rowData)
-                            },
-                            {
-                                icon: () => <Delete />,
-                                tooltip: 'Delete',
-                                onClick: (event, rowData) => this.handleDeleteMeal(rowData)
-                            }
-                        ]}
-                    />
-                </ThemeProvider>
+                <Container style={{ backgroundColor: 'white', borderRadius: '10px ', padding: '20px' }}>
+                    <Typography style={{ padding: '20px', color: textColor }}>Meals</Typography>
+                    <ThemeProvider theme={defaultMaterialTheme}>
+                        <MaterialTable
+                            title={null}
+                            columns={[
+                                { title: 'Meal Title', field: 'mealTitle' },
+                                {
+                                    field: 'ingredients', headerName: 'Ingredients', width: 130,
+                                    render: (rowData) => this.customTableRender(rowData, db)
+                                },
+                            ]}
+                            data={tableData}
+                            options={{
+                                searching: true,
+                                maxBodyHeight: '80vh',
+                                paging: false
+                            }}
+                            icons={{
+                                Search: SearchIcon,
+                                ResetSearch: ClearIcon
+                            }}
+                            actions={[
+                                {
+                                    icon: () => <Edit />,
+                                    tooltip: 'Edit',
+                                    onClick: (event, rowData) => this.handleEditMeal(rowData)
+                                },
+                                {
+                                    icon: () => <Delete />,
+                                    tooltip: 'Delete',
+                                    onClick: (event, rowData) => this.handleDeleteMeal(rowData)
+                                }
+                            ]}
+                        />
+                    </ThemeProvider>
 
-                <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <IconButton onClick={() => this.handleMealModal()} size="large">
-                        <AddBox />
-                    </IconButton>
-                    <Typography>Add Meal</Typography>
-                </div>
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <IconButton onClick={() => this.handleMealModal()} size="large">
+                            <StyledAddBox />
+                        </IconButton>
+                        <Typography>Add Meal</Typography>
+                    </div>
+                </Container>
 
                 {this.state.mealModal &&
                     <Dialog

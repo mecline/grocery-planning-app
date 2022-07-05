@@ -1,9 +1,9 @@
-import { Button, Dialog, IconButton, Typography } from '@mui/material';
+import { Button, Dialog, IconButton, Typography, Container } from '@mui/material';
 import { CheckBox, CheckBoxOutlineBlank } from '@mui/icons-material';
 import React from 'react';
 import ListModal from '../components/ListModal.js';
 import { auth, firebaseDb } from '../firebase/firebase.js';
-import { backgroundColor, textColor } from '../theme/MealPlannerTheme';
+import { backgroundColor, StyledContainer, textColor } from '../theme/MealPlannerTheme';
 
 class ListPage extends React.Component {
     constructor() {
@@ -75,13 +75,13 @@ class ListPage extends React.Component {
     displayListContents = (item, categoryFlag, classes) => {
         return (
             <React.Fragment key={item.ingredientId}>
-                <div>
+                <div style={{ fontWeight: 'bold', fontSize: 'large' }}>
                     {categoryFlag && item.category}
                 </div>
-                <div>
+                <div style={{ paddingRight: '5px', display: 'inline-block' }}>
                     {item.quantity > 1 ? '(' + item.quantity + ') ' : null}{item.ingredientName}
                 </div>
-                <div>
+                <div style={{ fontStyle: 'italic', display: 'inline-block' }}>
                     {this.state.notesEnabled && item.notes ? " Notes: " + item.notes : null}
                 </div>
             </React.Fragment>
@@ -120,38 +120,40 @@ class ListPage extends React.Component {
         ingredientsList = this.handleDuplicateIngredients(ingredientsList);
 
         return (
-            <div>
-                <Typography>Meals:</Typography>
-                Enable Notes
-                <IconButton onClick={() => this.handleNotesEnabled()} size="large">
-                    {this.state.notesEnabled ? <CheckBox /> : <CheckBoxOutlineBlank />}
-                </IconButton>
-                <Button onClick={() => this.handleSelectMeals()}>Add Meal</Button>
-                {mealTitles.map((meal) => {
-                    return <div key={meal} style={{
-                        display: 'inline-block', borderRadius: '15px', backgroundColor: backgroundColor, color: textColor,
-                        width: 'fit-content', padding: '0px 10px', marginLeft: '5px', marginBottom: '5px'
-                    }}>
-                        {meal}
-                    </div>
-                })}
+            <div style={{ margin: '25px' }}>
+                <Container style={{ backgroundColor: 'white', borderRadius: '10px ' }}>
+                    <Typography>Meals:</Typography>
+                    Enable Notes
+                    <IconButton onClick={() => this.handleNotesEnabled()} size="large">
+                        {this.state.notesEnabled ? <CheckBox style={{ size: '20px', color: textColor }} /> : <CheckBoxOutlineBlank style={{ size: '20px', color: textColor }} />}
+                    </IconButton>
+                    <Button onClick={() => this.handleSelectMeals()}>Add Meal</Button>
+                    {mealTitles.map((meal) => {
+                        return <div key={meal} style={{
+                            display: 'inline-block', borderRadius: '15px', backgroundColor: backgroundColor, color: textColor,
+                            width: 'fit-content', padding: '0px 10px', marginLeft: '5px', marginBottom: '5px'
+                        }}>
+                            {meal}
+                        </div>
+                    })}
 
-                {/* Sorting the different ingredients by categories for display */}
-                {ingredientsList.sort((a, b) => a.category > b.category ? 1 : -1).map((item, i) => {
-                    if (i === 0) {
-                        return this.displayListContents(item, true, classes);
-                    }
-                    else {
-                        let prevItem = ingredientsList[i - 1];
-                        if (prevItem.category !== item.category) {
-                            return this.displayListContents(item, true, classes); // true flag for category name posting
+                    {/* Sorting the different ingredients by categories for display */}
+                    {ingredientsList.sort((a, b) => a.category > b.category ? 1 : -1).map((item, i) => {
+                        if (i === 0) {
+                            return this.displayListContents(item, true, classes);
                         }
-                        else if (prevItem.category === item.category) {
-                            return this.displayListContents(item, false, classes);
+                        else {
+                            let prevItem = ingredientsList[i - 1];
+                            if (prevItem.category !== item.category) {
+                                return this.displayListContents(item, true, classes); // true flag for category name posting
+                            }
+                            else if (prevItem.category === item.category) {
+                                return this.displayListContents(item, false, classes);
+                            }
                         }
-                    }
-                    return ingredientsList;
-                })}
+                        return ingredientsList;
+                    })}
+                </Container>
 
                 {this.state.listModal &&
                     <Dialog

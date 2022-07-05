@@ -1,7 +1,13 @@
-import { CheckBox, CheckBoxOutlineBlank } from '@mui/icons-material';
 import { Button, Card, IconButton, Input, MenuItem, TextField } from '@mui/material';
+import { CheckBox, CheckBoxOutlineBlank } from '@mui/icons-material';
 import React from 'react';
 import { CATEGORIES } from '../data/Categories.js';
+import MealPlannerTheme, { StyledSquareButton } from '../theme/MealPlannerTheme';
+import { withStyles } from '@mui/styles';
+
+const styles = theme => ({
+    ...MealPlannerTheme(theme)
+});
 
 class IngredientModal extends React.Component {
     constructor(props) {
@@ -44,33 +50,36 @@ class IngredientModal extends React.Component {
                 <Card style={{ padding: '20px', minWidth: '80vh', minHeight: '75vh' }}>
                     Add Multiple?
                     <IconButton onClick={() => this.setMultipleAdditions()} size="large">
-                        {this.state.multipleAdditions ? <CheckBox /> : <CheckBoxOutlineBlank />}
+                        {this.state.multipleAdditions ? <CheckBox className={classes.addButton} /> : <CheckBoxOutlineBlank className={classes.addButton} />}
                     </IconButton>
-                    <TextField style={{ marginRight: '15px' }} variant="outlined" label="Ingredient Name" required
-                        value={this.state.ingredientName}
-                        onInput={e => this.setIngredientName(e.target.value)}
-                    />
-                    <TextField
-                        select
-                        value={this.state.category}
-                        variant="outlined"
-                        label="Category"
-                        onChange={e => this.setCategory(e.target.value)}
-                        input={<Input />}>
-                        {CATEGORIES.sort((a, b) => a.name > b.name ? 1 : -1).map((item) => {
-                            return <MenuItem key={item.id} value={item.name}>{item.name}</MenuItem>
-                        })}
-                    </TextField>
-                    <TextField style={{ marginRight: '15px' }} variant="outlined" label="Notes" multiline
-                        value={this.state.notes}
-                        onInput={e => this.setNotes(e.target.value)}
-                    />
-                    <div style={{
-                        position: 'absolute', right: 0, bottom: 0, margin: '15px'
-                    }}>
-                        <Button style={{ marginRight: '5px' }} onClick={() => this.props.closeCallback()}>Back</Button>
-                        <Button className={classes.squareButton}
-                            onClick={() => this.handleAdditionSubmit()}>Add</Button>
+                    <div style={{ display: 'inline-grid' }}>
+                        <TextField style={{ marginBottom: '20px' }} variant="outlined" label="Ingredient Name" required
+                            value={this.state.ingredientName}
+                            onInput={e => this.setIngredientName(e.target.value)}
+                        />
+                        <TextField
+                            style={{ marginBottom: '20px' }}
+                            select
+                            value={this.state.category}
+                            variant="outlined"
+                            label="Category"
+                            onChange={e => this.setCategory(e.target.value)}
+                            input={<Input />}>
+                            {CATEGORIES.sort((a, b) => a.name > b.name ? 1 : -1).map((item) => {
+                                return <MenuItem key={item.id} value={item.name}>{item.name}</MenuItem>
+                            })}
+                        </TextField>
+                        <TextField style={{ marginBottom: '20px' }} variant="outlined" label="Notes" multiline
+                            value={this.state.notes}
+                            onInput={e => this.setNotes(e.target.value)}
+                        />
+                        <div style={{
+                            position: 'absolute', right: 0, bottom: 0, margin: '15px'
+                        }}>
+                            <Button style={{ marginRight: '5px' }} onClick={() => this.props.closeCallback()}>Back</Button>
+                            <StyledSquareButton
+                                onClick={() => this.handleAdditionSubmit()}>Add</StyledSquareButton>
+                        </div>
                     </div>
                 </Card>
             </div>
@@ -79,4 +88,4 @@ class IngredientModal extends React.Component {
 }
 
 
-export default IngredientModal;
+export default withStyles(styles, { withTheme: true })(IngredientModal);

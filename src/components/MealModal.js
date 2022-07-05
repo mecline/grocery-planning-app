@@ -1,4 +1,4 @@
-import { AddBox, Delete } from '@mui/icons-material';
+import { Delete } from '@mui/icons-material';
 import { Button, Card, Dialog, IconButton, Input, MenuItem, TextField, Tooltip, Typography } from '@mui/material';
 import {
     createTheme, StyledEngineProvider, ThemeProvider
@@ -6,7 +6,7 @@ import {
 import MaterialTable from 'material-table';
 import React from 'react';
 import { auth, firebaseDb } from '../firebase/firebase.js';
-import { backgroundColor, textColor } from '../theme/MealPlannerTheme';
+import { backgroundColor, StyledAddBox, StyledSquareButton, textColor } from '../theme/MealPlannerTheme';
 import IngredientModal from './IngredientModal';
 
 const toolbar = createTheme({
@@ -158,7 +158,7 @@ class MealModal extends React.Component {
     }
 
     render() {
-        const { classes, db } = this.props;
+        const { db } = this.props;
         const { ingredients } = this.state;
         let ingredientsDbRef = db.ref(`users/${this.state.user.uid}/ingredients`);
         let tableData = [];
@@ -190,7 +190,7 @@ class MealModal extends React.Component {
 
                     <div style={{ display: 'flex', alignItems: 'center' }}>
                         <IconButton onClick={() => this.addIngredient()} size="large">
-                            <AddBox />
+                            <StyledAddBox />
                         </IconButton>
                         <Typography>Add Ingredient</Typography>
                     </div>
@@ -230,8 +230,8 @@ class MealModal extends React.Component {
                         position: 'absolute', right: 0, bottom: 0, margin: '15px'
                     }}>
                         <Button style={{ marginRight: '5px' }} onClick={() => this.props.closeCallback()}>Close</Button>
-                        <Button
-                            onClick={() => this.props.confirmCallback(this.state.mealTitle, this.state.ingredients, this.props.mealId)}>Save</Button>
+                        <StyledSquareButton
+                            onClick={() => this.props.confirmCallback(this.state.mealTitle, this.state.ingredients, this.props.mealId)}>Save</StyledSquareButton>
                     </div>
                 </Card>
 
