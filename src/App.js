@@ -9,6 +9,7 @@ import HomePage from './pages/HomePage.js';
 import ListPage from './pages/ListPage';
 import MealPage from './pages/MealPage';
 import Navigation from './pages/Navigation';
+import EmailSender from './components/EmailSender';
 
 class App extends React.Component {
 
@@ -27,7 +28,7 @@ class App extends React.Component {
           <Router>
             <Navigation />
             <Routes>
-              <Route exact path='/' element={<PrivateRoute><HomePage /></PrivateRoute>} />
+              <Route exact path='/' element={<PrivateRoute><EmailSender /></PrivateRoute>} />
               <Route path='/meals' element={<PrivateRoute><MealPage /></PrivateRoute>} />
               <Route path='/list' element={<PrivateRoute><ListPage /></PrivateRoute>} />
               <Route path="/login" element={<Login />} />

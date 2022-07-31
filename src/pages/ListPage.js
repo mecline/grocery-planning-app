@@ -1,21 +1,33 @@
-import { Button, Dialog, IconButton, Typography, Container } from '@mui/material';
 import { CheckBox, CheckBoxOutlineBlank } from '@mui/icons-material';
+import { Button, Container, Dialog, IconButton, Typography } from '@mui/material';
 import React from 'react';
+import EmailSender from '../components/EmailSender.js';
 import ListModal from '../components/ListModal.js';
 import { auth, firebaseDb } from '../firebase/firebase.js';
-import { backgroundColor, StyledContainer, textColor } from '../theme/MealPlannerTheme';
+import { backgroundColor, textColor } from '../theme/MealPlannerTheme';
 
 class ListPage extends React.Component {
     constructor() {
         super();
         this.state = {
             user: auth.currentUser,
-            notesEnabled: false
+            notesEnabled: false,
+            sendEmailModal: false,
+            listModal: false
         };
+    }
+
+    componentDidMount = () => {
+
     }
 
     handleSelectMeals = () => {
         this.setState({ listModal: true });
+    }
+
+    handleEmailSend = () => {
+
+        this.setState({ sendEmailModal: true });
     }
 
     handleNotesEnabled = () => {
@@ -127,6 +139,7 @@ class ListPage extends React.Component {
                     <IconButton onClick={() => this.handleNotesEnabled()} size="large">
                         {this.state.notesEnabled ? <CheckBox style={{ size: '20px', color: textColor }} /> : <CheckBoxOutlineBlank style={{ size: '20px', color: textColor }} />}
                     </IconButton>
+                    <Button onClick={() => this.handleEmailSend()}>Send Email</Button>
                     <Button onClick={() => this.handleSelectMeals()}>Add Meal</Button>
                     {mealTitles.map((meal) => {
                         return <div key={meal} style={{
@@ -164,6 +177,17 @@ class ListPage extends React.Component {
                             selectedMeals={selectedMeals}
                             closeCallback={() => this.handleModalClose('listModal')}
                             confirmCallback={this.handleSaveSelectedMeals}
+                        />
+                    </Dialog>}
+
+                {this.state.sendEmailModal &&
+                    <Dialog
+                        open={this.state.sendEmailModal}
+                        onClose={() => this.handleModalClose('sendEmailModal')}>
+                        <EmailSender
+                            listMessage={ingredientsList.length > 1 ? ingredientsList : 'none'}
+                            closeCallback={() => this.handleModalClose('sendEmailModal')}
+                            notesEnabled={this.state.notesEnabled}
                         />
                     </Dialog>}
             </div>
