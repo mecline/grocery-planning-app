@@ -71,7 +71,6 @@ const Navigation = () => {
         <AppBar position="static">
             <Container style={{ backgroundColor: backgroundColor }} maxWidth={false}>
                 <Toolbar>
-                    <Typography style={{ color: textColor, fontWeight: 'bold' }}>Meal Planning App</Typography>
 
                     <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
                         <IconButton
