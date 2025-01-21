@@ -11,7 +11,7 @@ import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
 import MenuItem from '@mui/material/MenuItem';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { backgroundColor, textColor } from '../theme/MealPlannerTheme';
 import { useUserContext } from '../firebase/UserContext';
 
@@ -43,6 +43,7 @@ const Navigation = () => {
     const [anchorElNav, setAnchorElNav] = React.useState(null);
     const [anchorElUser, setAnchorElUser] = React.useState(null);
     const { user, logoutUser } = useUserContext();
+    const navigate = useNavigate();
 
     const handleOpenNavMenu = (event) => {
         setAnchorElNav(event.currentTarget);
@@ -180,7 +181,18 @@ const Navigation = () => {
                             onClose={handleCloseUserMenu}
                         >
                             {settings.map((setting) => (
-                                <MenuItem key={setting} onClick={handleCloseUserMenu}>
+                                <MenuItem 
+                                    key={setting} 
+                                    onClick={() => {
+                                        handleCloseUserMenu();
+                                        if (setting === 'Profile') {
+                                            navigate('/profile');
+                                        } else if (setting === 'Logout') {
+                                            logoutUser();
+                                        }
+                                        // Add other routes as needed for 'Account'
+                                    }}
+                                >
                                     <Typography textAlign="center">{setting}</Typography>
                                 </MenuItem>
                             ))}
