@@ -5,7 +5,6 @@ import Register from './pages/Register';
 import './App.css';
 import PrivateRoute from './firebase/PrivateRoute';
 import { UserContextProvider } from './firebase/UserContext';
-import HomePage from './pages/HomePage.js';
 import ListPage from './pages/ListPage';
 import MealPage from './pages/MealPage';
 import Navigation from './pages/Navigation';
