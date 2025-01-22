@@ -80,9 +80,20 @@ export const UserContextProvider = ({ children }) => {
             
             // Handle avatar upload if provided
             if (avatarFile) {
-                const storageRef = ref(storage, `avatars/${user.uid}`);
-                await uploadBytes(storageRef, avatarFile);
-                const photoURL = await getDownloadURL(storageRef);
+                // Create a reference to the file
+                const fileRef = ref(storage, `avatars/${user.uid}/${Date.now()}_${avatarFile.name}`);
+                
+                // Create file metadata including the content type
+                const metadata = {
+                    contentType: avatarFile.type,
+                    customMetadata: {
+                        'userId': user.uid
+                    }
+                };
+                
+                // Upload the file and metadata
+                const uploadTask = await uploadBytes(fileRef, avatarFile, metadata);
+                const photoURL = await getDownloadURL(uploadTask.ref);
                 updates.photoURL = photoURL;
             }
 

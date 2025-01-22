@@ -24,3 +24,9 @@ export const firebaseDb = db;
 export const auth = firebase.auth();
 export const storage = firebase.storage();
 
+// Configure Storage
+const storageRef = storage.ref();
+storage.setCustomAuthenticationHeaders({
+    'Access-Control-Allow-Origin': '*'
+});
+
