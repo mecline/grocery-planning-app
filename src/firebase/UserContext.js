@@ -28,17 +28,33 @@ export const UserContextProvider = ({ children }) => {
         return unsubscribe;
     }, []);
 
-    const registerUser = (email, password, name) => {
+    const registerUser = async (email, password, name) => {
         setLoading(true);
-        createUserWithEmailAndPassword(auth, email, password)
-            .then(() =>
-                updateProfile(auth.currentUser, {
-                    displayName: name,
-                })
-            )
-            .then((res) => console.log(res))
-            .catch((err) => setError(err.message))
-            .finally(() => setLoading(false));
+        try {
+            // Create the user in Firebase Auth
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            
+            // Update the user profile with display name
+            await updateProfile(userCredential.user, {
+                displayName: name,
+            });
+
+            // Initialize user profile in Realtime Database
+            const userRef = firebaseDb.database().ref(`users/${userCredential.user.uid}/profile`);
+            await userRef.set({
+                displayName: name,
+                email: email,
+                photoURL: null,
+                createdAt: new Date().toISOString(),
+                lastUpdated: new Date().toISOString()
+            });
+
+        } catch (err) {
+            setError(err.message);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
     };
 
     const signInUser = (email, password) => {
@@ -87,7 +103,7 @@ export const UserContextProvider = ({ children }) => {
 
             // Store additional user data in Realtime Database
             const userRef = firebaseDb.database().ref(`users/${user.uid}/profile`);
-            await userRef.update({
+            await userRef.set({
                 displayName,
                 email,
                 photoURL: updates.photoURL || user.photoURL,
