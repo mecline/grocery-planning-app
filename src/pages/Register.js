@@ -1,6 +1,6 @@
 import React, { useRef } from "react";
 import { useUserContext } from "../firebase/UserContext";
-import { Button, TextField, Link, Container, Typography } from '@mui/material';
+import { Button, TextField, Link, Typography } from '@mui/material';
 import { StyledContainer, textColor } from "../theme/MealPlannerTheme";
 
 const Register = () => {

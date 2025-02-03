@@ -1,6 +1,6 @@
 import { styled } from "@mui/system";
 import { Toolbar, Button, Container } from '@mui/material';
-import { AddBox, Delete } from '@mui/icons-material';
+import { AddBox } from '@mui/icons-material';
 
 // export const textColor = '#c8541a';                   //ORANGE
 // export const backgroundColor = '#f7cfaa';

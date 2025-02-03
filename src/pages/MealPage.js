@@ -5,7 +5,7 @@ import React from 'react';
 import MealModal from '../components/MealModal';
 import { auth, firebaseDb } from '../firebase/firebase.js';
 import { ThemeProvider, createTheme, Container } from '@mui/material';
-import { StyledAddBox, StyledContainer, textColor } from '../theme/MealPlannerTheme';
+import { StyledAddBox, textColor } from '../theme/MealPlannerTheme';
 import SearchIcon from '@mui/icons-material/Search';
 import ClearIcon from '@mui/icons-material/Clear';
 

@@ -1,8 +1,8 @@
-import { Button, Container, Link, TextField, Typography } from '@mui/material';
+import { Button, Link, TextField, Typography } from '@mui/material';
 import React, { useRef } from "react";
 import { Navigate } from "react-router-dom";
 import { useUserContext } from "../firebase/UserContext";
-import { backgroundColor, StyledContainer, textColor } from "../theme/MealPlannerTheme";
+import { StyledContainer, textColor } from "../theme/MealPlannerTheme";
 
 const Login = () => {
     const emailRef = useRef();

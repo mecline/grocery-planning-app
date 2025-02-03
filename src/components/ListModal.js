@@ -5,7 +5,7 @@ import {
 import MaterialTable from 'material-table';
 import React from 'react';
 import { auth } from '../firebase/firebase.js';
-import { backgroundColor, StyledSquareButton, textColor } from '../theme/MealPlannerTheme';
+import { StyledSquareButton } from '../theme/MealPlannerTheme';
 
 class ListModal extends React.Component {
     constructor(props) {
