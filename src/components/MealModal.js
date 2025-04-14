@@ -1,27 +1,9 @@
-import { Delete } from '@mui/icons-material';
-import { Button, Card, Dialog, IconButton, Input, MenuItem, TextField, Tooltip, Typography } from '@mui/material';
-import {
-    createTheme, StyledEngineProvider, ThemeProvider
-} from '@mui/material/styles';
-import MaterialTable from 'material-table';
+import { Button, Card, Dialog, IconButton, TextField, Typography } from '@mui/material';
 import React from 'react';
 import { auth, firebaseDb } from '../firebase/firebase.js';
-import { backgroundColor, StyledAddBox, StyledSquareButton, textColor } from '../theme/MealPlannerTheme';
+import { StyledAddBox, StyledSquareButton } from '../theme/MealPlannerTheme';
 import IngredientModal from './IngredientModal';
-
-const toolbar = createTheme({
-    palette: {
-        primary: {
-            main: textColor,
-        },
-        secondary: {
-            main: backgroundColor,
-        },
-    },
-
-});
-
-const QUANTITY_TEST = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+import IngredientChips from './IngredientChips';
 
 class MealModal extends React.Component {
     constructor(props) {
@@ -34,7 +16,6 @@ class MealModal extends React.Component {
             category: '',
             ingredientModal: false,
             isEditing: false,
-
         };
     }
 
@@ -126,35 +107,8 @@ class MealModal extends React.Component {
         !multipleAdditions && this.setState({ ingredientModal: false });
     }
 
-    setQuantityForId = (event, rowData) => {
-        let value = event.target.value;
-        let newState = this.state.ingredients;
-
-        newState.map((item) => {
-            if (item.ingredientId === rowData.ingredientId) {
-                item.quantity = value;
-            }
-            return this.state.ingredients;
-        })
-        this.setState({ ingredients: newState });
-    }
-
-    handleQuantity = (rowData) => {
-        return (
-            <Tooltip title={!rowData.tableData.checked ? "Item must be checked to add quantity" : ""}>
-                <TextField
-                    disabled={rowData.tableData.checked ? false : true}
-                    select
-                    variant="outlined"
-                    value={rowData.quantity}
-                    onChange={event => this.setQuantityForId(event, rowData, this.state.ingredients)}
-                    input={<Input />}>
-                    {QUANTITY_TEST.map((item) => {
-                        return <MenuItem key={item} value={item}>{item}</MenuItem>
-                    })}
-                </TextField>
-            </Tooltip>
-        )
+    handleIngredientsChange = (updatedIngredients) => {
+        this.setState({ ingredients: updatedIngredients });
     }
 
     render() {
@@ -182,56 +136,56 @@ class MealModal extends React.Component {
 
         return (
             <div>
-                <Card style={{ padding: '20px', minWidth: '80vh', minHeight: '75vh' }}>
-                    <TextField style={{ marginRight: '15px' }} variant="outlined" label="Meal Title" required
-                        value={this.state.mealTitle}
-                        onInput={e => this.setMealTitle(e.target.value)}
-                    />
+                <Card style={{ 
+                    padding: '20px', 
+                    width: '90vw',
+                    maxWidth: '1200px',
+                    height: '80vh',
+                    display: 'flex',
+                    flexDirection: 'column'
+                }}>
+                    <div style={{ marginBottom: '15px' }}>
+                        <TextField 
+                            style={{ marginRight: '15px', width: '300px' }} 
+                            variant="outlined" 
+                            label="Meal Title" 
+                            required
+                            value={this.state.mealTitle}
+                            onInput={e => this.setMealTitle(e.target.value)}
+                        />
 
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <IconButton onClick={() => this.addIngredient()} size="large">
-                            <StyledAddBox />
-                        </IconButton>
-                        <Typography>Add Ingredient</Typography>
+                        <div style={{ display: 'flex', alignItems: 'center', marginTop: '10px' }}>
+                            <IconButton onClick={() => this.addIngredient()} size="large">
+                                <StyledAddBox />
+                            </IconButton>
+                            <Typography>Add New Ingredient</Typography>
+                        </div>
                     </div>
-                    <StyledEngineProvider injectFirst>
-                        <ThemeProvider theme={toolbar}>
-                            <div style={{ marginBottom: '20px' }}>
-                                <MaterialTable
-                                    title="Add Ingredients"
-                                    columns={[
-                                        { title: 'Name', field: 'ingredientName' },
-                                        { title: 'Category', field: 'category' },
-                                        { title: 'Quantity', field: 'quantity', render: (rowData) => this.handleQuantity(rowData, rowData.ingredientId) },
-                                        { title: 'Notes', field: 'notes' },
-                                    ]}
-                                    data={tableData}
-                                    options={{
-                                        searching: true,
-                                        selection: true,
-                                        paging: false,
-                                        maxBodyHeight: '45vh'
-                                    }}
-                                    actions={[
-                                        {
-                                            icon: () => <Delete />,
-                                            tooltip: 'Delete',
-                                            position: 'row',
-                                            onClick: (event, rowData) => this.handleDeleteIngredient(rowData)
-                                        }
-                                    ]}
-                                    onSelectionChange={(rows) => this.setIngredients(rows)}
-                                />
-                            </div>
-                        </ThemeProvider>
-                    </StyledEngineProvider>
 
-                    < div style={{
-                        position: 'absolute', right: 0, bottom: 0, margin: '15px'
+                    <div style={{ 
+                        flex: 1, 
+                        overflowY: 'auto',
+                        marginBottom: '70px'
                     }}>
-                        <Button style={{ marginRight: '5px' }} onClick={() => this.props.closeCallback()}>Close</Button>
+                        <IngredientChips
+                            ingredients={tableData}
+                            selectedIngredients={ingredients}
+                            onIngredientsChange={this.handleIngredientsChange}
+                        />
+                    </div>
+
+                    <div style={{
+                        position: 'absolute', 
+                        right: '0', 
+                        bottom: '20px',
+                        backgroundColor: 'white',
+                        borderRadius: '4px',
+                    }}>
+                        <Button style={{ marginRight: '5px' }} onClick={() => this.props.closeCallback()}>Cancel</Button>
                         <StyledSquareButton
-                            onClick={() => this.props.confirmCallback(this.state.mealTitle, this.state.ingredients, this.props.mealId)}>Save</StyledSquareButton>
+                            onClick={() => this.props.confirmCallback(this.state.mealTitle, this.state.ingredients, this.props.mealId)}>
+                            Save Meal
+                        </StyledSquareButton>
                     </div>
                 </Card>
 
@@ -255,6 +209,5 @@ class MealModal extends React.Component {
         );
     }
 }
-
 
 export default MealModal;

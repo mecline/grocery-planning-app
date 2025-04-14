@@ -8,7 +8,7 @@ import { UserContextProvider } from './firebase/UserContext';
 import ListPage from './pages/ListPage';
 import MealPage from './pages/MealPage';
 import Navigation from './pages/Navigation';
-import EmailSender from './components/EmailSender';
+
 import ProfilePage from './pages/ProfilePage';
 
 class App extends React.Component {
@@ -17,7 +17,7 @@ class App extends React.Component {
 
     return (
       <div style={{
-        backgroundImage: "url(/knifeGreensBorder.jpg)",
+        backgroundImage: "url(./knifeGreensBorder.jpg)",
         backgroundPosition: 'center',
         backgroundSize: 'cover',
         backgroundRepeat: 'no-repeat',
@@ -28,8 +28,7 @@ class App extends React.Component {
           <Router>
             <Navigation />
             <Routes>
-              <Route exact path='/' element={<PrivateRoute><EmailSender /></PrivateRoute>} />
-              <Route path='/meals' element={<PrivateRoute><MealPage /></PrivateRoute>} />
+              <Route exact path='/' element={<PrivateRoute><MealPage /></PrivateRoute>} />
               <Route path='/list' element={<PrivateRoute><ListPage /></PrivateRoute>} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />

@@ -1,31 +1,36 @@
 import emailjs from '@emailjs/browser';
-import { Button, TextField, Typography } from '@mui/material';
+import { Button, TextField, Typography, Box, Paper, IconButton, InputAdornment } from '@mui/material';
+import SendIcon from '@mui/icons-material/Send';
+import EmailIcon from '@mui/icons-material/Email';
 import React from 'react';
 import { auth } from '../firebase/firebase';
-import { StyledContainer, textColor } from '../theme/MealPlannerTheme';
+import { textColor, backgroundColor } from '../theme/MealPlannerTheme';
 
 class EmailSender extends React.Component {
     constructor() {
         super();
         this.state = {
             currentUser: auth.currentUser,
-            toEmail: auth.currentUser.email ? auth.currentUser.email : null,
+            toEmail: auth.currentUser.email ? auth.currentUser.email : '',
+            sending: false,
+            success: false,
+            error: null
         };
         this.message = '';
     }
 
     handleEmailSend = (e) => {
         e.preventDefault();
+        this.setState({ sending: true, error: null });
+        
         this.message = '';
         this.props.listMessage && this.displayListHTMLMessage(this.props.listMessage);
+        
         let templateVariables = {
-            toName: this.state.currentUser.displayName,
+            toName: this.state.currentUser.displayName || 'Shopper',
             toEmail: this.state.toEmail,
             message: this.message
         }
-
-        // this.displayListHTMLMessage(this.props.listMessage);
-        console.log(templateVariables.message)
 
         // emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', templateParams)
         emailjs.send(`${process.env.REACT_APP_EMAILJS_SERVICE_ID}`,
@@ -34,11 +39,15 @@ class EmailSender extends React.Component {
             `${process.env.REACT_APP_EMAILJS_PUBLIC_KEY}`
         )
             .then(result => {
-                alert('Message Sent, I\'ll get back to you shortly', result.text);
+                this.setState({ sending: false, success: true });
+                setTimeout(() => this.props.closeCallback(), 1500);
             },
-                error => {
-                    alert('An error occured, Plese try again', error.text)
-                })
+            error => {
+                this.setState({ 
+                    sending: false, 
+                    error: 'Failed to send email. Please try again.' 
+                });
+            });
     }
 
     handleToEmailChange = (e) => {
@@ -71,31 +80,104 @@ class EmailSender extends React.Component {
                 }
             }
             return listMessage;
-        })
+        });
     }
 
-
     render() {
+        const { sending, success, error } = this.state;
 
         return (
-            <div style={{ display: 'inline-grid', padding: '25px' }}>
-                <StyledContainer>
-                    <Typography style={{ paddingTop: '25px', fontSize: 'large', fontWeight: 'bold', color: textColor }
-                    } > Send list</ Typography>
-                    <TextField name="to_email" style={{ marginBottom: '10px' }}
-                        id="outlined"
-                        label="Email"
-                        onChange={this.handleToEmailChange}
-                        defaultValue={this.state.currentUser.email}
-                    />
-
-                    <Button variant='outlined' style={{ color: textColor, marginBottom: '10px' }}
-                        onClick={(event) => this.handleEmailSend(event)}>
-                        Submit
-                    </Button>
-                </StyledContainer>
-            </div>
-        )
+            <Box sx={{ 
+                p: 4, 
+                width: '400px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center'
+            }}>
+                <Typography variant="h5" sx={{ mb: 3, color: textColor }}>
+                    Send Shopping List
+                </Typography>
+                
+                <Paper
+                    elevation={0}
+                    sx={{
+                        p: 3,
+                        width: '100%',
+                        backgroundColor: '#f7f7f7',
+                        borderRadius: '8px',
+                        mb: 3
+                    }}
+                >
+                    <Box component="form" onSubmit={this.handleEmailSend}>
+                        <TextField
+                            name="to_email"
+                            label="Email Address"
+                            variant="outlined"
+                            fullWidth
+                            value={this.state.toEmail}
+                            onChange={this.handleToEmailChange}
+                            required
+                            sx={{ mb: 3 }}
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <EmailIcon sx={{ color: textColor }} />
+                                    </InputAdornment>
+                                ),
+                            }}
+                        />
+                        
+                        <Button
+                            type="submit"
+                            variant="contained"
+                            disabled={sending}
+                            fullWidth
+                            endIcon={<SendIcon />}
+                            sx={{
+                                backgroundColor: backgroundColor,
+                                color: textColor,
+                                '&:hover': {
+                                    backgroundColor: backgroundColor,
+                                    opacity: 0.9
+                                }
+                            }}
+                        >
+                            {sending ? 'Sending...' : 'Send Shopping List'}
+                        </Button>
+                        
+                        {success && (
+                            <Typography 
+                                variant="body2" 
+                                sx={{ 
+                                    color: 'green', 
+                                    textAlign: 'center', 
+                                    mt: 2 
+                                }}
+                            >
+                                Email sent successfully!
+                            </Typography>
+                        )}
+                        
+                        {error && (
+                            <Typography 
+                                variant="body2" 
+                                sx={{ 
+                                    color: 'error.main', 
+                                    textAlign: 'center', 
+                                    mt: 2 
+                                }}
+                            >
+                                {error}
+                            </Typography>
+                        )}
+                    </Box>
+                </Paper>
+                
+                <Typography variant="body2" sx={{ textAlign: 'center', color: 'text.secondary', fontStyle: 'italic' }}>
+                    Your shopping list will be sent to the email address provided.
+                </Typography>
+            </Box>
+        );
     }
 }
 

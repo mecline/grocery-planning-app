@@ -1,11 +1,11 @@
-import { Dialog, IconButton, Typography } from '@mui/material';
+import { Dialog, IconButton, Typography, Chip, Box } from '@mui/material';
 import { Delete, Edit } from '@mui/icons-material';
 import MaterialTable from 'material-table';
 import React from 'react';
 import MealModal from '../components/MealModal';
 import { auth, firebaseDb } from '../firebase/firebase.js';
 import { ThemeProvider, createTheme, Container } from '@mui/material';
-import { StyledAddBox, textColor } from '../theme/MealPlannerTheme';
+import { StyledAddBox, textColor, backgroundColor } from '../theme/MealPlannerTheme';
 import SearchIcon from '@mui/icons-material/Search';
 import ClearIcon from '@mui/icons-material/Clear';
 
@@ -92,24 +92,42 @@ class MealPage extends React.Component {
         })
     }
 
-    customTableRender = (rowData, db) => {
-        let ingredients = [];
-
-        // if throwing error 'Object not valid for .equalTo' make sure a quantity is coming through, predefined as 1
-        rowData.ingredients && rowData.ingredients.map((item) => {
-            return db.ref(`users/${this.state.user.uid}/ingredients`).orderByChild("ingredientName").equalTo(item.ingredientName).on('child_added', (snapshot) => {
-                ingredients.push(snapshot.val().ingredientName);
-            });
-        })
-
-        let customRowData = '';
-        if (ingredients) {
-            ingredients.map((item, index) => {
-                return customRowData += (item + (index !== (ingredients.length - 1) ? ', ' : ' '));
-            })
-            return customRowData;
+    renderIngredientChips = (rowData, db) => {
+        if (!rowData.ingredients || rowData.ingredients.length === 0) {
+            return <span>No ingredients</span>;
         }
-        return customRowData;
+
+        return (
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                {rowData.ingredients.map((ingredient, index) => (
+                    <Chip
+                        key={index}
+                        label={
+                            <span>
+                                {ingredient.quantity > 1 && 
+                                    <span style={{ marginRight: '4px' }}>
+                                        ({ingredient.quantity})
+                                    </span>
+                                }
+                                {ingredient.ingredientName}
+                            </span>
+                        }
+                        size="small"
+                        sx={{
+                            backgroundColor: backgroundColor,
+                            color: textColor,
+                            margin: '2px',
+                            maxWidth: '150px',
+                            '& .MuiChip-label': {
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis'
+                            }
+                        }}
+                    />
+                ))}
+            </Box>
+        );
     }
 
     getQuantityState = (ingredients) => {
@@ -133,22 +151,46 @@ class MealPage extends React.Component {
         return (
             <div style={{ padding: '50px' }}>
                 <Container style={{ backgroundColor: 'white', borderRadius: '10px ', padding: '20px' }}>
-                    <Typography style={{ padding: '20px', color: textColor }}>Meals</Typography>
+                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <Typography style={{ padding: '20px', color: textColor }}>Meals</Typography>
+                        <IconButton onClick={() => this.handleMealModal()} size="large">
+                            <StyledAddBox sx={{ color: textColor }} />
+                        </IconButton>
+                        <Typography style={{ color: textColor }}>Add Meal</Typography>
+                    </div>
                     <ThemeProvider theme={defaultMaterialTheme}>
                         <MaterialTable
                             title={null}
                             columns={[
-                                { title: 'Meal Title', field: 'mealTitle' },
+                                { 
+                                    title: 'Meal Title', 
+                                    field: 'mealTitle',
+                                    width: '25%', 
+                                },
                                 {
-                                    field: 'ingredients', headerName: 'Ingredients', width: 130,
-                                    render: (rowData) => this.customTableRender(rowData, db)
+                                    title: 'Ingredients', 
+                                    field: 'ingredients', 
+                                    width: '75%', 
+                                    render: (rowData) => this.renderIngredientChips(rowData, db)
                                 },
                             ]}
                             data={tableData}
                             options={{
                                 searching: true,
                                 maxBodyHeight: '80vh',
-                                paging: false
+                                paging: false,
+                                actionsColumnIndex: -1,
+                                headerStyle: {
+                                    backgroundColor: 'white',
+                                    color: textColor,
+                                    fontWeight: 'bold'
+                                },
+                                rowStyle: {
+                                    color: textColor
+                                },
+                                searchFieldStyle: {
+                                    color: textColor
+                                }
                             }}
                             icons={{
                                 Search: SearchIcon,
@@ -156,31 +198,26 @@ class MealPage extends React.Component {
                             }}
                             actions={[
                                 {
-                                    icon: () => <Edit />,
+                                    icon: () => <Edit sx={{ color: textColor }}/>,
                                     tooltip: 'Edit',
                                     onClick: (event, rowData) => this.handleEditMeal(rowData)
                                 },
                                 {
-                                    icon: () => <Delete />,
+                                    icon: () => <Delete sx={{ color: textColor }}/>,
                                     tooltip: 'Delete',
                                     onClick: (event, rowData) => this.handleDeleteMeal(rowData)
                                 }
                             ]}
                         />
                     </ThemeProvider>
-
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <IconButton onClick={() => this.handleMealModal()} size="large">
-                            <StyledAddBox />
-                        </IconButton>
-                        <Typography>Add Meal</Typography>
-                    </div>
                 </Container>
 
                 {this.state.mealModal &&
                     <Dialog
                         open={this.state.mealModal}
-                        onClose={() => this.handleModalClose('mealModal')}>
+                        onClose={() => this.handleModalClose('mealModal')}
+                        maxWidth={false}
+                    >
                         <MealModal
                             db={db}
                             closeCallback={() => this.handleModalClose('mealModal')}

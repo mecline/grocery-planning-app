@@ -7,47 +7,37 @@ import Typography from '@mui/material/Typography';
 import Menu from '@mui/material/Menu';
 import MenuIcon from '@mui/icons-material/Menu';
 import Container from '@mui/material/Container';
-import Avatar from '@mui/material/Avatar';
-import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
 import MenuItem from '@mui/material/MenuItem';
 import { Link, useNavigate } from 'react-router-dom';
 import { backgroundColor, textColor } from '../theme/MealPlannerTheme';
 import { useUserContext } from '../firebase/UserContext';
-
-const pages = [
-    {
-        title: 'Meals',
-        path: 'meals',
-        loggedIn: true
-    },
-    {
-        title: 'List',
-        path: 'list',
-        loggedIn: true
-    },
-    {
-        title: 'Login',
-        path: 'login',
-        loggedIn: false
-    },
-    {
-        title: 'Register',
-        path: 'register',
-        loggedIn: false
-    }
-]
-const settings = ['Profile', 'Account', 'Logout'];
+import AccountBoxIcon from '@mui/icons-material/AccountBox';
+import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu';
+import ListAltIcon from '@mui/icons-material/ListAlt';
+import Tabs from '@mui/material/Tabs';
+import Tab from '@mui/material/Tab';
+import PersonIcon from '@mui/icons-material/Person';
+import LogoutIcon from '@mui/icons-material/Logout';
 
 const Navigation = () => {
     const [anchorElNav, setAnchorElNav] = React.useState(null);
     const [anchorElUser, setAnchorElUser] = React.useState(null);
+    const [value, setValue] = React.useState(0); // tabs
     const { user, logoutUser } = useUserContext();
     const navigate = useNavigate();
+
+    React.useEffect(() => {
+        // Set active tab based on current path
+        const path = window.location.hash.replace('#/', '');
+        if (path === '') setValue(0);
+        else if (path === 'list') setValue(1);
+    }, []);
 
     const handleOpenNavMenu = (event) => {
         setAnchorElNav(event.currentTarget);
     };
+    
     const handleOpenUserMenu = (event) => {
         setAnchorElUser(event.currentTarget);
     };
@@ -60,29 +50,32 @@ const Navigation = () => {
         setAnchorElUser(null);
     };
 
-    const handleLinkClick = (page) => {
-        return (
-            <Link underline="hover" style={{ color: textColor, textDecoration: 'none' }} to={`/${page.path}`}>
-                {page.title}
-            </Link>
-        )
-    }
+    const handleTabChange = (event, newValue) => {
+        setValue(newValue);
+    };
 
     return (
-        <AppBar position="static">
-            <Container style={{ backgroundColor: backgroundColor }} maxWidth={false}>
-                <Toolbar>
-
-                    <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
+        <AppBar 
+            position="static" 
+            elevation={0}
+            sx={{ 
+                borderBottom: '1px solid rgba(0,0,0,0.05)',
+                backgroundColor: backgroundColor 
+            }}
+        >
+            <Container maxWidth={false}>
+                <Toolbar disableGutters sx={{ height: '70px' }}>
+                    {/* Logo for mobile */}
+                    <Box sx={{ display: { xs: 'flex', md: 'none' }, alignItems: 'center' }}>
                         <IconButton
                             size="large"
-                            aria-label="account of current user"
+                            aria-label="menu"
                             aria-controls="menu-appbar"
                             aria-haspopup="true"
                             onClick={handleOpenNavMenu}
                             color="inherit"
                         >
-                            <MenuIcon />
+                            <MenuIcon sx={{ color: textColor }} />
                         </IconButton>
                         <Menu
                             id="menu-appbar"
@@ -102,68 +95,122 @@ const Navigation = () => {
                                 display: { xs: 'block', md: 'none' },
                             }}
                         >
-                            {/* {pages.map((page) => (
-                                <MenuItem key={page.title} onClick={handleCloseNavMenu}>
-                                    <Typography textAlign="center">
-                                        <Link underline="hover" style={{ color: textColor, textDecoration: 'none' }} to={`/${page.path}`}>
-                                            {page.title}
-                                        </Link>
-                                    </Typography>
-                                </MenuItem>
-                            ))} */}
+                            <MenuItem onClick={() => {handleCloseNavMenu(); navigate('/');}}>
+                                <Typography textAlign="center" sx={{ display: 'flex', alignItems: 'center' }}>
+                                    <RestaurantMenuIcon sx={{ mr: 1, fontSize: 20 }} />
+                                    Meals
+                                </Typography>
+                            </MenuItem>
+                            <MenuItem onClick={() => {handleCloseNavMenu(); navigate('/list');}}>
+                                <Typography textAlign="center" sx={{ display: 'flex', alignItems: 'center' }}>
+                                    <ListAltIcon sx={{ mr: 1, fontSize: 20 }} />
+                                    Shopping List
+                                </Typography>
+                            </MenuItem>
                         </Menu>
                     </Box>
 
-                    <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
-                        {user ? // controls what pages a user is able to navigate to from toolbar
-                            <React.Fragment>
-                                {pages.map((page) => (
-                                    page.loggedIn &&
-                                    <Button
-                                        key={page.title}
-                                        onClick={() => handleLinkClick(page)}
-                                        sx={{ my: 2, color: 'white', display: 'block' }}
-                                    >
-                                        <Link underline="hover" style={{ color: textColor, textDecoration: 'none' }} to={`/${page.path}`}>
-                                            {page.title}
-                                        </Link>
-                                    </Button>
-                                ))}
-                                {user &&
-                                    <Button sx={{ my: 2, color: 'white', display: 'block' }} onClick={() => logoutUser()}>
-                                        <Typography style={{ fontSize: 'small', color: textColor }}>Sign out</Typography>
-                                    </Button>
-                                }
-                            </React.Fragment>
-                            :
-                            <React.Fragment>
-                                {pages.map((page) => (
-                                    !page.loggedIn &&
-                                    <Button
-                                        key={page.title}
-                                        onClick={() => handleLinkClick(page)}
-                                        sx={{ my: 2, color: 'white', display: 'block' }}
-                                    >
-                                        <Link underline="hover" style={{ color: textColor, textDecoration: 'none' }} to={`/${page.path}`}>
-                                            {page.title}
-                                        </Link>
-                                    </Button>
-                                ))}
-                                {user &&
-                                    <Button sx={{ my: 2, color: 'white', display: 'block' }} onClick={() => logoutUser()}>
-                                        <Typography style={{ fontSize: 'small', color: textColor }}>Sign out</Typography>
-                                    </Button>
-                                }
-                            </React.Fragment>
-                        }
-                    </Box>
+                    {/* App Title */}
+                    <Typography
+                        variant="h5"
+                        noWrap
+                        component="a"
+                        href="#/"
+                        sx={{
+                            mr: 4,
+                            display: { xs: 'none', md: 'flex' },
+                            fontFamily: 'monospace',
+                            fontWeight: 700,
+                            letterSpacing: '.1rem',
+                            color: textColor,
+                            textDecoration: 'none',
+                        }}
+                    >
+                        MEAL PLANNER
+                    </Typography>
 
+                    {/* Navigation Tabs - Desktop */}
+                    {user && (
+                        <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
+                            <Tabs 
+                                value={value} 
+                                onChange={handleTabChange}
+                                textColor="inherit"
+                                TabIndicatorProps={{
+                                    style: {
+                                        backgroundColor: textColor,
+                                    }
+                                }}
+                                sx={{
+                                    '& .MuiTab-root': {
+                                        color: textColor,
+                                        opacity: 0.7,
+                                        '&.Mui-selected': {
+                                            opacity: 1,
+                                            fontWeight: 'bold',
+                                        }
+                                    }
+                                }}
+                            >
+                                <Tab 
+                                    label={
+                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                            <RestaurantMenuIcon sx={{ mr: 1 }} />
+                                            Meals
+                                        </Box>
+                                    } 
+                                    component={Link} 
+                                    to="/" 
+                                />
+                                <Tab 
+                                    label={
+                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                            <ListAltIcon sx={{ mr: 1 }} />
+                                            Shopping List
+                                        </Box>
+                                    } 
+                                    component={Link} 
+                                    to="/list" 
+                                />
+                            </Tabs>
+                        </Box>
+                    )}
+
+                    {/* Login/Register or User Profile */}
                     <Box sx={{ flexGrow: 0 }}>
-                        <Tooltip title="Open settings">
-                            <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                                <Avatar alt="Remy Sharp" src="/static/images/avatar/2.jpg" />
-                            </IconButton>
-                        </Tooltip>
+                        {user ? (
+                            <Tooltip title="Open settings">
+                                <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
+                                <AccountBoxIcon fontSize='large' sx={{color: textColor }}/>
+                                </IconButton>
+                            </Tooltip>
+                        ) : (
+                            <Box sx={{ display: 'flex', gap: 2 }}>
+                                <Link 
+                                    to="/login" 
+                                    style={{ 
+                                        color: textColor, 
+                                        textDecoration: 'none',
+                                        display: 'flex',
+                                        alignItems: 'center'
+                                    }}
+                                >
+                                    Login
+                                </Link>
+                                <Link 
+                                    to="/register" 
+                                    style={{ 
+                                        color: textColor, 
+                                        textDecoration: 'none',
+                                        background: 'rgba(255,255,255,0.2)',
+                                        padding: '6px 16px',
+                                        borderRadius: '4px'
+                                    }}
+                                >
+                                    Register
+                                </Link>
+                            </Box>
+                        )}
                         <Menu
                             sx={{ mt: '45px' }}
                             id="menu-appbar"
@@ -180,22 +227,24 @@ const Navigation = () => {
                             open={Boolean(anchorElUser)}
                             onClose={handleCloseUserMenu}
                         >
-                            {settings.map((setting) => (
-                                <MenuItem 
-                                    key={setting} 
-                                    onClick={() => {
-                                        handleCloseUserMenu();
-                                        if (setting === 'Profile') {
-                                            navigate('/profile');
-                                        } else if (setting === 'Logout') {
-                                            logoutUser();
-                                        }
-                                        // Add other routes as needed for 'Account'
-                                    }}
-                                >
-                                    <Typography textAlign="center">{setting}</Typography>
-                                </MenuItem>
-                            ))}
+                            <MenuItem 
+                                onClick={() => {
+                                    handleCloseUserMenu();
+                                    navigate('/profile');
+                                }}
+                            >
+                                <PersonIcon sx={{ mr: 1, fontSize: 18 }} />
+                                <Typography textAlign="center">Profile</Typography>
+                            </MenuItem>
+                            <MenuItem 
+                                onClick={() => {
+                                    handleCloseUserMenu();
+                                    logoutUser();
+                                }}
+                            >
+                                <LogoutIcon sx={{ mr: 1, fontSize: 18 }} />
+                                <Typography textAlign="center">Logout</Typography>
+                            </MenuItem>
                         </Menu>
                     </Box>
                 </Toolbar>
@@ -203,4 +252,5 @@ const Navigation = () => {
         </AppBar>
     );
 };
+
 export default Navigation;

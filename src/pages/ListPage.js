@@ -1,10 +1,13 @@
 import { CheckBox, CheckBoxOutlineBlank } from '@mui/icons-material';
-import { Button, Container, Dialog, IconButton, Typography } from '@mui/material';
+import { Container, Dialog, IconButton, Typography, Paper, Tooltip } from '@mui/material';
 import React from 'react';
 import EmailSender from '../components/EmailSender.js';
 import ListModal from '../components/ListModal.js';
 import { auth, firebaseDb } from '../firebase/firebase.js';
 import { backgroundColor, textColor } from '../theme/MealPlannerTheme';
+import EmailIcon from '@mui/icons-material/Email';
+import AddCircleIcon from '@mui/icons-material/AddCircle';
+import { List, ListItem, ListItemText } from '@mui/material';
 
 class ListPage extends React.Component {
     constructor() {
@@ -26,7 +29,6 @@ class ListPage extends React.Component {
     }
 
     handleEmailSend = () => {
-
         this.setState({ sendEmailModal: true });
     }
 
@@ -84,24 +86,7 @@ class ListPage extends React.Component {
         return newList;
     }
 
-    displayListContents = (item, categoryFlag, classes) => {
-        return (
-            <React.Fragment key={item.ingredientId}>
-                <div style={{ fontWeight: 'bold', fontSize: 'large' }}>
-                    {categoryFlag && item.category}
-                </div>
-                <div style={{ paddingRight: '5px', display: 'inline-block' }}>
-                    {item.quantity > 1 ? '(' + item.quantity + ') ' : null}{item.ingredientName}
-                </div>
-                <div style={{ fontStyle: 'italic', display: 'inline-block' }}>
-                    {this.state.notesEnabled && item.notes ? " Notes: " + item.notes : null}
-                </div>
-            </React.Fragment>
-        )
-    }
-
     render() {
-        const { classes } = this.props;
         let db = firebaseDb.database();
         let selectedDbRef = db.ref(`users/${this.state.user.uid}/selectedMeals`);
         let selectedMeals = [];
@@ -130,42 +115,128 @@ class ListPage extends React.Component {
         })
 
         ingredientsList = this.handleDuplicateIngredients(ingredientsList);
+        
+        // Group ingredients by category for more organized rendering
+        const groupedIngredients = {};
+        ingredientsList.sort((a, b) => a.category > b.category ? 1 : -1).forEach(item => {
+            if (!groupedIngredients[item.category]) {
+                groupedIngredients[item.category] = [];
+            }
+            groupedIngredients[item.category].push(item);
+        });
 
         return (
             <div style={{ margin: '25px' }}>
-                <Container style={{ backgroundColor: 'white', borderRadius: '10px ' }}>
-                    <Typography>Meals:</Typography>
-                    Enable Notes
-                    <IconButton onClick={() => this.handleNotesEnabled()} size="large">
-                        {this.state.notesEnabled ? <CheckBox style={{ size: '20px', color: textColor }} /> : <CheckBoxOutlineBlank style={{ size: '20px', color: textColor }} />}
-                    </IconButton>
-                    <Button onClick={() => this.handleEmailSend()}>Send Email</Button>
-                    <Button onClick={() => this.handleSelectMeals()}>Add Meal</Button>
-                    {mealTitles.map((meal) => {
-                        return <div key={meal} style={{
-                            display: 'inline-block', borderRadius: '15px', backgroundColor: backgroundColor, color: textColor,
-                            width: 'fit-content', padding: '0px 10px', marginLeft: '5px', marginBottom: '5px'
-                        }}>
-                            {meal}
+                <Container style={{ backgroundColor: 'white', borderRadius: '10px ', padding: '20px' }}>
+                    <div style={{ marginBottom: '20px' }}>
+                        <Typography variant="h5" style={{ marginBottom: '15px', color: textColor }}>Shopping List</Typography>
+                        
+                        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '15px' }}>
+                            <Tooltip title={this.state.notesEnabled ? "Disable Notes" : "Enable Notes"}>
+                                <IconButton onClick={() => this.handleNotesEnabled()} size="large">
+                                    {this.state.notesEnabled ? 
+                                        <CheckBox style={{ color: textColor }} /> : 
+                                        <CheckBoxOutlineBlank style={{ color: textColor }} />
+                                    }
+                                </IconButton>
+                            </Tooltip>
+                            <Typography>Enable Notes</Typography>
+                            
+                            <div style={{ flex: 1 }}></div>
+                            
+                            <Tooltip title="Send List by Email">
+                                <IconButton 
+                                    onClick={() => this.handleEmailSend()} 
+                                    style={{ marginRight: '10px' }}
+                                    color="primary"
+                                >
+                                    <EmailIcon style={{ color: textColor }} />
+                                </IconButton>
+                            </Tooltip>
+                            
+                            <Tooltip title="Add Meals to List">
+                                <IconButton 
+                                    onClick={() => this.handleSelectMeals()}
+                                    color="primary"
+                                >
+                                    <AddCircleIcon style={{ color: textColor }} />
+                                </IconButton>
+                            </Tooltip>
                         </div>
-                    })}
-
-                    {/* Sorting the different ingredients by categories for display */}
-                    {ingredientsList.sort((a, b) => a.category > b.category ? 1 : -1).map((item, i) => {
-                        if (i === 0) {
-                            return this.displayListContents(item, true, classes);
-                        }
-                        else {
-                            let prevItem = ingredientsList[i - 1];
-                            if (prevItem.category !== item.category) {
-                                return this.displayListContents(item, true, classes); // true flag for category name posting
-                            }
-                            else if (prevItem.category === item.category) {
-                                return this.displayListContents(item, false, classes);
-                            }
-                        }
-                        return ingredientsList;
-                    })}
+                        
+                        <Typography variant="h6" style={{ marginBottom: '15px' }}>Selected Meals:</Typography>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', marginBottom: '20px' }}>
+                            {mealTitles.map((meal) => (
+                                <div key={meal} style={{
+                                    display: 'inline-block', 
+                                    borderRadius: '15px', 
+                                    backgroundColor: backgroundColor, 
+                                    color: textColor,
+                                    width: 'fit-content', 
+                                    padding: '4px 12px', 
+                                    marginRight: '8px', 
+                                    marginBottom: '8px'
+                                }}>
+                                    {meal}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    
+                    {ingredientsList.length > 0 ? (
+                        <Paper elevation={2} style={{ 
+                            padding: '20px',
+                            backgroundColor: '#ffffff',
+                            color: '#000000',
+                            fontFamily: 'Arial, sans-serif',
+                            maxHeight: '50vh',
+                            overflowY: 'auto',
+                            borderRadius: '8px'
+                        }}>
+                            {Object.entries(groupedIngredients).map(([category, items]) => (
+                                <div key={category} style={{ marginBottom: '20px' }}>
+                                    <Typography 
+                                        variant="h6" 
+                                        style={{ 
+                                            borderBottom: '1px solid #000',  
+                                            paddingBottom: '8px',
+                                            marginBottom: '8px',
+                                            fontWeight: 'bold'
+                                        }}
+                                    >
+                                        {category}
+                                    </Typography>
+                                    <List dense>
+                                        {items.map((item, idx) => (
+                                            <ListItem key={`${item.ingredientId}-${idx}`} dense>
+                                                <ListItemText
+                                                    primary={
+                                                        <span>
+                                                            {item.quantity > 1 ? `(${item.quantity}) ` : ''}
+                                                            <span style={{ fontWeight: '500' }}>{item.ingredientName}</span>
+                                                            {this.state.notesEnabled && item.notes && 
+                                                                <span style={{ 
+                                                                    fontStyle: 'italic', 
+                                                                    marginLeft: '8px',
+                                                                    color: '#555555'
+                                                                }}>
+                                                                    Notes: {item.notes}
+                                                                </span>
+                                                            }
+                                                        </span>
+                                                    }
+                                                />
+                                            </ListItem>
+                                        ))}
+                                    </List>
+                                </div>
+                            ))}
+                        </Paper>
+                    ) : (
+                        <Typography style={{ textAlign: 'center', padding: '30px', color: '#777' }}>
+                            No items in your shopping list. Add meals to generate a list.
+                        </Typography>
+                    )}
                 </Container>
 
                 {this.state.listModal &&
