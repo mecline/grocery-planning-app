@@ -1,21 +1,21 @@
 {
-  "files": {
-    "main.css": "/grocery-plannig-app/static/css/main.073c9b0a.css",
-    "main.js": "/grocery-plannig-app/static/js/main.b6c58456.js",
-    "static/js/498.424420aa.chunk.js": "/grocery-plannig-app/static/js/498.424420aa.chunk.js",
-    "static/js/703.b690d805.chunk.js": "/grocery-plannig-app/static/js/703.b690d805.chunk.js",
-    "static/js/513.5cc63432.chunk.js": "/grocery-plannig-app/static/js/513.5cc63432.chunk.js",
-    "static/js/787.0a848178.chunk.js": "/grocery-plannig-app/static/js/787.0a848178.chunk.js",
-    "index.html": "/grocery-plannig-app/index.html",
-    "main.073c9b0a.css.map": "/grocery-plannig-app/static/css/main.073c9b0a.css.map",
-    "main.b6c58456.js.map": "/grocery-plannig-app/static/js/main.b6c58456.js.map",
-    "498.424420aa.chunk.js.map": "/grocery-plannig-app/static/js/498.424420aa.chunk.js.map",
-    "703.b690d805.chunk.js.map": "/grocery-plannig-app/static/js/703.b690d805.chunk.js.map",
-    "513.5cc63432.chunk.js.map": "/grocery-plannig-app/static/js/513.5cc63432.chunk.js.map",
-    "787.0a848178.chunk.js.map": "/grocery-plannig-app/static/js/787.0a848178.chunk.js.map"
-  },
-  "entrypoints": [
-    "static/css/main.073c9b0a.css",
-    "static/js/main.b6c58456.js"
-  ]
-}
+    "files": {
+      "main.css": "/grocery-planning-app/static/css/main.073c9b0a.css",
+      "main.js": "/grocery-planning-app/static/js/main.b6c58456.js",
+      "static/js/498.424420aa.chunk.js": "/grocery-planning-app/static/js/498.424420aa.chunk.js",
+      "static/js/703.b690d805.chunk.js": "/grocery-planning-app/static/js/703.b690d805.chunk.js",
+      "static/js/513.5cc63432.chunk.js": "/grocery-planning-app/static/js/513.5cc63432.chunk.js",
+      "static/js/787.0a848178.chunk.js": "/grocery-planning-app/static/js/787.0a848178.chunk.js",
+      "index.html": "/grocery-planning-app/index.html",
+      "main.073c9b0a.css.map": "/grocery-planning-app/static/css/main.073c9b0a.css.map",
+      "main.b6c58456.js.map": "/grocery-planning-app/static/js/main.b6c58456.js.map",
+      "498.424420aa.chunk.js.map": "/grocery-planning-app/static/js/498.424420aa.chunk.js.map",
+      "703.b690d805.chunk.js.map": "/grocery-planning-app/static/js/703.b690d805.chunk.js.map",
+      "513.5cc63432.chunk.js.map": "/grocery-planning-app/static/js/513.5cc63432.chunk.js.map",
+      "787.0a848178.chunk.js.map": "/grocery-planning-app/static/js/787.0a848178.chunk.js.map"
+    },
+    "entrypoints": [
+      "static/css/main.073c9b0a.css",
+      "static/js/main.b6c58456.js"
+    ]
+  }
