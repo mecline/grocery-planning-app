@@ -1,6 +1,6 @@
-import { Button, Link, TextField, Typography } from '@mui/material';
+import { Button, TextField, Typography, Box, useMediaQuery, useTheme } from '@mui/material';
 import React, { useRef } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, Link as RouterLink } from "react-router-dom";
 import { useUserContext } from "../firebase/UserContext";
 import { StyledContainer, textColor } from "../theme/MealPlannerTheme";
 
@@ -8,6 +8,8 @@ const Login = () => {
     const emailRef = useRef();
     const pwdRef = useRef();
     const { signInUser, forgotPassword, user } = useUserContext();
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
     const onSubmit = (e) => {
         e.preventDefault();
@@ -26,37 +28,103 @@ const Login = () => {
 
     return (
         user ? <Navigate to="/" /> :
-            <div style={{
-                margin: '20px',
+            <Box sx={{
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center'
+                justifyContent: 'center',
+                height: 'calc(100vh - 70px)',
+                p: isMobile ? 2 : 3
             }}>
-                <StyledContainer>
-                    <Typography style={{ paddingTop: '25px', fontSize: 'large', fontWeight: 'bold', color: textColor }
-                    } > Login</ Typography>
+                <StyledContainer sx={{
+                    width: isMobile ? '95%' : '400px',
+                    maxWidth: '100%',
+                    p: isMobile ? 2 : 3,
+                    borderRadius: '10px',
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
+                }}>
+                    <Typography sx={{ 
+                        fontSize: isMobile ? '1.5rem' : '1.75rem', 
+                        fontWeight: 'bold', 
+                        color: textColor,
+                        mb: 3
+                    }}>
+                        Login
+                    </Typography>
+                    
                     <form onSubmit={onSubmit}>
-                        <div style={{ display: 'inline-grid', padding: '25px' }}>
-                            <TextField style={{ marginBottom: '10px' }}
-                                id="outlined"
+                        <Box sx={{ 
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 2,
+                            width: '100%'
+                        }}>
+                            <TextField
+                                id="email"
                                 label="Email Address"
                                 inputRef={emailRef}
+                                fullWidth
+                                variant="outlined"
+                                size={isMobile ? "small" : "medium"}
                             />
-                            <TextField style={{ marginBottom: '10px' }}
-                                id="outlined-password-input"
+                            
+                            <TextField
+                                id="password"
                                 label="Password"
                                 type="password"
                                 autoComplete="current-password"
                                 inputRef={pwdRef}
+                                fullWidth
+                                variant="outlined"
+                                size={isMobile ? "small" : "medium"}
                             />
-                            <Button variant='outlined' style={{ color: textColor, marginBottom: '10px' }} type="submit">Submit</Button>
-                            <Link underline="hover" style={{ color: textColor, marginBottom: '10px' }} onClick={() => forgotPasswordHandler}>Forgot Password?</Link>
-                            {/* Enable forgot password to pop open a different form where only email should be entered */}
-                            <Link underline="hover" style={{ color: textColor }} href={'/register'}>Not a user? Create an account</Link>
-                        </div>
+                            
+                            <Button 
+                                variant='outlined' 
+                                sx={{ 
+                                    color: textColor, 
+                                    borderColor: textColor,
+                                    py: isMobile ? 1 : 1.5,
+                                    mt: 1
+                                }} 
+                                type="submit"
+                                fullWidth
+                            >
+                                Login
+                            </Button>
+                            
+                            <Box sx={{ 
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: 1,
+                                mt: 1
+                            }}>
+                                <RouterLink 
+                                    to="#" 
+                                    style={{ 
+                                        color: textColor, 
+                                        textDecoration: 'none',
+                                        textAlign: 'center'
+                                    }} 
+                                    onClick={forgotPasswordHandler}
+                                >
+                                    Forgot Password?
+                                </RouterLink>
+                                
+                                <RouterLink 
+                                    to="/register" 
+                                    style={{ 
+                                        color: textColor, 
+                                        textDecoration: 'none',
+                                        textAlign: 'center'
+                                    }}
+                                >
+                                    Not a user? Create an account
+                                </RouterLink>
+                            </Box>
+                        </Box>
                     </form>
                 </StyledContainer>
-            </div >
+            </Box>
     );
 };
 

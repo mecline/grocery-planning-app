@@ -1,8 +1,8 @@
-import { Button, Card, IconButton, Input, MenuItem, TextField } from '@mui/material';
+import { Button, Card, IconButton, Input, MenuItem, TextField, Typography, Box, useMediaQuery, useTheme } from '@mui/material';
 import { CheckBox, CheckBoxOutlineBlank } from '@mui/icons-material';
 import React from 'react';
 import { CATEGORIES } from '../data/Categories.js';
-import MealPlannerTheme, { StyledSquareButton } from '../theme/MealPlannerTheme';
+import MealPlannerTheme, { StyledSquareButton, textColor } from '../theme/MealPlannerTheme';
 import { withStyles } from '@mui/styles';
 
 const styles = theme => ({
@@ -43,49 +43,121 @@ class IngredientModal extends React.Component {
     }
 
     render() {
-        const { classes } = this.props;
+        const { classes, isMobile = false } = this.props;
 
         return (
-            <div>
-                <Card style={{ padding: '20px', minWidth: '80vh', minHeight: '75vh' }}>
-                    Add Multiple?
-                    <IconButton onClick={() => this.setMultipleAdditions()} size="large">
-                        {this.state.multipleAdditions ? <CheckBox className={classes.addButton} /> : <CheckBoxOutlineBlank className={classes.addButton} />}
-                    </IconButton>
-                    <div style={{ display: 'inline-grid' }}>
-                        <TextField style={{ marginBottom: '20px' }} variant="outlined" label="Ingredient Name" required
+            <Box sx={{ 
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                p: isMobile ? 1 : 2
+            }}>
+                <Card sx={{ 
+                    p: isMobile ? 2 : 4, 
+                    width: isMobile ? '95vw' : '500px', 
+                    maxWidth: '100%',
+                    maxHeight: isMobile ? '90vh' : '85vh', 
+                    overflow: 'auto',
+                    display: 'flex',
+                    flexDirection: 'column'
+                }}>
+                    <Box sx={{ 
+                        display: 'flex',
+                        alignItems: 'center',
+                        mb: 2
+                    }}>
+                        <Typography variant={isMobile ? "subtitle1" : "h6"} sx={{ color: textColor, fontWeight: 'bold' }}>
+                            Add Ingredient
+                        </Typography>
+                    </Box>
+                    
+                    <Box sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        mb: 2
+                    }}>
+                        <Typography variant={isMobile ? "body2" : "body1"}>
+                            Add Multiple?
+                        </Typography>
+                        <IconButton 
+                            onClick={() => this.setMultipleAdditions()} 
+                            size={isMobile ? "small" : "medium"}
+                            sx={{ ml: 1 }}
+                        >
+                            {this.state.multipleAdditions ? 
+                                <CheckBox className={classes.addButton} /> : 
+                                <CheckBoxOutlineBlank className={classes.addButton} />
+                            }
+                        </IconButton>
+                    </Box>
+                    
+                    <Box sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 2,
+                        width: '100%',
+                        mb: 2
+                    }}>
+                        <TextField 
+                            variant="outlined" 
+                            label="Ingredient Name" 
+                            required
                             value={this.state.ingredientName}
                             onInput={e => this.setIngredientName(e.target.value)}
+                            fullWidth
+                            size={isMobile ? "small" : "medium"}
                         />
                         <TextField
-                            style={{ marginBottom: '20px' }}
                             select
                             value={this.state.category}
                             variant="outlined"
                             label="Category"
                             onChange={e => this.setCategory(e.target.value)}
-                            input={<Input />}>
+                            fullWidth
+                            size={isMobile ? "small" : "medium"}
+                            input={<Input />}
+                        >
                             {CATEGORIES.sort((a, b) => a.name > b.name ? 1 : -1).map((item) => {
                                 return <MenuItem key={item.id} value={item.name}>{item.name}</MenuItem>
                             })}
                         </TextField>
-                        <TextField style={{ marginBottom: '20px' }} variant="outlined" label="Notes" multiline
+                        <TextField 
+                            variant="outlined" 
+                            label="Notes" 
+                            multiline
+                            rows={isMobile ? 2 : 3}
                             value={this.state.notes}
                             onInput={e => this.setNotes(e.target.value)}
+                            fullWidth
+                            size={isMobile ? "small" : "medium"}
                         />
-                        <div style={{
-                            position: 'absolute', right: 0, bottom: 0, margin: '15px'
-                        }}>
-                            <Button style={{ marginRight: '5px' }} onClick={() => this.props.closeCallback()}>Back</Button>
-                            <StyledSquareButton
-                                onClick={() => this.handleAdditionSubmit()}>Add</StyledSquareButton>
-                        </div>
-                    </div>
+                    </Box>
+                    
+                    <Box sx={{
+                        display: 'flex',
+                        justifyContent: 'flex-end',
+                        mt: 'auto',
+                        pt: 2,
+                        borderTop: '1px solid #eee'
+                    }}>
+                        <Button 
+                            sx={{ mr: 1 }} 
+                            onClick={() => this.props.closeCallback()}
+                            size={isMobile ? "small" : "medium"}
+                        >
+                            Back
+                        </Button>
+                        <StyledSquareButton
+                            onClick={() => this.handleAdditionSubmit()}
+                            size={isMobile ? "small" : "medium"}
+                        >
+                            Add
+                        </StyledSquareButton>
+                    </Box>
                 </Card>
-            </div>
+            </Box>
         );
     }
 }
-
 
 export default withStyles(styles, { withTheme: true })(IngredientModal);

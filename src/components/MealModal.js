@@ -1,29 +1,30 @@
-import { Button, Card, Dialog, IconButton, TextField, Typography } from '@mui/material';
+import { Button, Card, Dialog, IconButton, Typography, Box, useMediaQuery, useTheme, Chip } from '@mui/material';
+import { Delete, Edit } from '@mui/icons-material';
 import React from 'react';
-import { auth, firebaseDb } from '../firebase/firebase.js';
-import { StyledAddBox, StyledSquareButton } from '../theme/MealPlannerTheme';
 import IngredientModal from './IngredientModal';
 import IngredientChips from './IngredientChips';
+import { auth, firebaseDb } from '../firebase/firebase.js';
+import { StyledAddBox, StyledSquareButton, textColor, backgroundColor } from '../theme/MealPlannerTheme';
 
-class MealModal extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            user: auth.currentUser,
-            mealTitle: props.mealTitle ? props.mealTitle : '',
-            ingredients: props.ingredients ? props.ingredients : [],
-            quantity: '',
-            category: '',
-            ingredientModal: false,
-            isEditing: false,
-        };
-    }
+const MealModal = (props) => {
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+    
+    const [state, setState] = React.useState({
+        user: auth.currentUser,
+        mealTitle: props.mealTitle ? props.mealTitle : '',
+        ingredients: props.ingredients ? props.ingredients : [],
+        quantity: '',
+        category: '',
+        ingredientModal: false,
+        isEditing: false,
+    });
 
-    setMealTitle = (mealTitle) => {
-        this.setState({ mealTitle: mealTitle });
-    }
+    const setMealTitle = (mealTitle) => {
+        setState(prevState => ({ ...prevState, mealTitle }));
+    };
 
-    setIngredients = (rowData) => {
+    const setIngredients = (rowData) => {
         let filteredData = [];
         rowData.map((item) => {
             return filteredData.push({
@@ -33,181 +34,367 @@ class MealModal extends React.Component {
                 quantity: item.quantity ? item.quantity : 1,
                 notes: item.notes
             });
-        })
-        this.setState({ ingredients: filteredData });
-    }
+        });
+        setState(prevState => ({ ...prevState, ingredients: filteredData }));
+    };
 
-    addIngredient = () => {
-        this.setState({ ingredientModal: true, isEditing: true });
-    }
+    const addIngredient = () => {
+        setState(prevState => ({ ...prevState, ingredientModal: true, isEditing: true }));
+    };
 
-    handleDeleteIngredient = (rowData) => {
+    const handleDeleteIngredient = (rowData) => {
         let snapshotList = [];
-        firebaseDb.database().ref(`users/${this.state.user.uid}/ingredients/${rowData.ingredientId}`).remove();
+        firebaseDb.database().ref(`users/${state.user.uid}/ingredients/${rowData.ingredientId}`).remove();
 
-        firebaseDb.database().ref(`users/${this.state.user.uid}/meals`).on('child_added', (snapshot) => {
+        firebaseDb.database().ref(`users/${state.user.uid}/meals`).on('child_added', (snapshot) => {
             snapshot.forEach((childSnapshot) => {
                 snapshotList.push(childSnapshot.val())
                 if (Array.isArray(childSnapshot.val())) {
-                    if (this.ingredientDeleteCheck(rowData.ingredientId, childSnapshot.val())) {
-                        this.handleDeleteIngredientFromMeal(rowData.ingredientId, childSnapshot.val(), snapshot.key)
+                    if (ingredientDeleteCheck(rowData.ingredientId, childSnapshot.val())) {
+                        handleDeleteIngredientFromMeal(rowData.ingredientId, childSnapshot.val(), snapshot.key)
                     }
                 }
             });
         });
-    }
+    };
 
-    ingredientDeleteCheck = (id, ingredientList) => {
+    const ingredientDeleteCheck = (id, ingredientList) => {
         let checkUpdate = false;
         ingredientList.forEach((item) => {
             if (item.ingredientId === id) {
                 checkUpdate = true;
             }
-        })
+        });
         return checkUpdate;
-    }
+    };
 
-    handleDeleteIngredientFromMeal = (ingredientId, fullList, mealId) => {
+    const handleDeleteIngredientFromMeal = (ingredientId, fullList, mealId) => {
         // handles deleting ingredients that have been attached to meals already
         let updatedIngredientList = fullList.filter(item => item.ingredientId !== ingredientId);
 
         // using .set as .update is deprecated for arrays being passed
-        firebaseDb.database().ref(`users/${this.state.user.uid}/meals/${mealId}/ingredients`).set(
+        firebaseDb.database().ref(`users/${state.user.uid}/meals/${mealId}/ingredients`).set(
             updatedIngredientList
-        )
-    }
+        );
+    };
 
-    handleModalClose = (modalForClose) => {
-        this.setState({
+    const handleModalClose = (modalForClose) => {
+        setState(prevState => ({
+            ...prevState,
             [modalForClose]: false,
             isEditing: false,
             ingredientId: '',
             ingredientName: '',
             category: '',
             notes: ''
-        });
-    }
+        }));
+    };
 
-    handleWriteIngredientData = (ingredientName, category, notes, ingredientId, multipleAdditions) => {
+    const handleWriteIngredientData = (ingredientName, category, notes, ingredientId, multipleAdditions) => {
         if (!ingredientId) {
-            this.props.db.ref(`users/${this.state.user.uid}/ingredients`).push({
+            props.db.ref(`users/${state.user.uid}/ingredients`).push({
                 ingredientName: ingredientName,
                 category: category ? category : '',
                 notes: notes
-            })
+            });
         }
         else if (ingredientId) {
-            this.props.db.ref(`users/${this.state.user.uid}/ingredients/${ingredientId}`).update({
+            props.db.ref(`users/${state.user.uid}/ingredients/${ingredientId}`).update({
                 ingredientName: ingredientName,
                 category: category ? category : '',
                 notes: notes
-            })
+            });
         }
 
-        !multipleAdditions && this.setState({ ingredientModal: false });
-    }
+        !multipleAdditions && setState(prevState => ({ ...prevState, ingredientModal: false }));
+    };
 
-    handleIngredientsChange = (updatedIngredients) => {
-        this.setState({ ingredients: updatedIngredients });
-    }
+    const handleIngredientsChange = (updatedIngredients) => {
+        setState(prevState => ({ ...prevState, ingredients: updatedIngredients }));
+    };
 
-    render() {
-        const { db } = this.props;
-        const { ingredients } = this.state;
-        let ingredientsDbRef = db.ref(`users/${this.state.user.uid}/ingredients`);
-        let tableData = [];
-        let ingredientStateIds = ingredients.map((item) => { return item.ingredientName });
-        const quantityMap = new Map();
+    const { db } = props;
+    const { ingredients, mealTitle, ingredientModal } = state;
+    let ingredientsDbRef = db.ref(`users/${state.user.uid}/ingredients`);
+    let tableData = [];
+    let ingredientStateIds = ingredients.map((item) => { return item.ingredientName });
+    const quantityMap = new Map();
 
-        ingredients.map((item) => {
-            return quantityMap.set(item.ingredientName, item.quantity);
-        })
+    ingredients.map((item) => {
+        return quantityMap.set(item.ingredientName, item.quantity);
+    });
 
-        ingredientsDbRef.on('child_added', function (snapshot) {
-            tableData.push({
-                ingredientId: snapshot.key,
-                ingredientName: snapshot.val().ingredientName,
-                category: snapshot.val().category,
-                quantity: (ingredientStateIds.includes(snapshot.val().ingredientName)) ? quantityMap.get(snapshot.val().ingredientName) : '',
-                notes: snapshot.val().notes,
-                tableData: ingredientStateIds.includes(snapshot.val().ingredientName) ? { checked: true } : { checked: false }
-            });
-        })
+    ingredientsDbRef.on('child_added', function (snapshot) {
+        tableData.push({
+            ingredientId: snapshot.key,
+            ingredientName: snapshot.val().ingredientName,
+            category: snapshot.val().category,
+            quantity: (ingredientStateIds.includes(snapshot.val().ingredientName)) ? quantityMap.get(snapshot.val().ingredientName) : '',
+            notes: snapshot.val().notes,
+            tableData: ingredientStateIds.includes(snapshot.val().ingredientName) ? { checked: true } : { checked: false }
+        });
+    });
 
-        return (
-            <div>
-                <Card style={{ 
-                    padding: '20px', 
-                    width: '90vw',
-                    maxWidth: '1200px',
-                    height: '80vh',
-                    display: 'flex',
-                    flexDirection: 'column'
+    return (
+        <Box sx={{ 
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            p: isMobile ? 1 : 2
+        }}>
+            <Card sx={{ 
+                p: isMobile ? 2 : 3, 
+                width: isMobile ? '100vw' : '80vw', 
+                height: isMobile ? '100vh' : '85vh',
+                maxWidth: '1000px',
+                maxHeight: isMobile ? '100vh' : '85vh', 
+                overflow: 'auto',
+                display: 'flex',
+                flexDirection: 'column',
+                borderRadius: isMobile ? 0 : '8px',
+                position: 'relative'
+            }}>
+                <Box sx={{ 
+                    display: 'flex', 
+                    flexDirection: isMobile ? 'column' : 'row', 
+                    alignItems: 'flex-start', 
+                    mb: 2,
+                    width: '100%'
                 }}>
-                    <div style={{ marginBottom: '15px' }}>
-                        <TextField 
-                            style={{ marginRight: '15px', width: '300px' }} 
-                            variant="outlined" 
-                            label="Meal Title" 
-                            required
-                            value={this.state.mealTitle}
-                            onInput={e => this.setMealTitle(e.target.value)}
-                        />
-
-                        <div style={{ display: 'flex', alignItems: 'center', marginTop: '10px' }}>
-                            <IconButton onClick={() => this.addIngredient()} size="large">
-                                <StyledAddBox />
-                            </IconButton>
-                            <Typography>Add New Ingredient</Typography>
-                        </div>
-                    </div>
-
-                    <div style={{ 
-                        flex: 1, 
-                        overflowY: 'auto',
-                        marginBottom: '70px'
+                    <Box sx={{ width: isMobile ? '100%' : '70%' }}>
+                        <Typography 
+                            variant={isMobile ? "h6" : "h5"} 
+                            sx={{ 
+                                color: textColor,
+                                fontWeight: 'medium',
+                                mb: 2
+                            }}
+                        >
+                            {props.mealId ? 'Edit Meal' : 'Add New Meal'}
+                        </Typography>
+                        
+                        <Box sx={{ mb: 2 }}>
+                            <Typography 
+                                variant="body2" 
+                                sx={{ 
+                                    fontWeight: 'medium',
+                                    mb: 0.5
+                                }}
+                            >
+                                Meal Title*
+                            </Typography>
+                            <input
+                                style={{ 
+                                    width: '100%', 
+                                    padding: '10px', 
+                                    border: '1px solid #ccc',
+                                    borderRadius: '4px',
+                                    fontSize: isMobile ? '14px' : '16px'
+                                }}
+                                type="text"
+                                value={mealTitle}
+                                onChange={(e) => setMealTitle(e.target.value)}
+                                placeholder="Enter meal name"
+                                required
+                            />
+                        </Box>
+                    </Box>
+                    
+                    <Box sx={{ 
+                        display: 'flex', 
+                        alignItems: 'center',
+                        ml: isMobile ? 0 : 'auto',
+                        mt: isMobile ? 1 : 0,
+                        mb: isMobile ? 2 : 0
                     }}>
-                        <IngredientChips
-                            ingredients={tableData}
-                            selectedIngredients={ingredients}
-                            onIngredientsChange={this.handleIngredientsChange}
-                        />
-                    </div>
+                        <IconButton onClick={() => addIngredient()} size={isMobile ? "medium" : "large"}>
+                            <StyledAddBox />
+                        </IconButton>
+                        <Typography variant={isMobile ? "body2" : "body1"}>Add Ingredient</Typography>
+                    </Box>
+                </Box>
+                
+                <Typography 
+                    variant="subtitle1" 
+                    sx={{ 
+                        mb: 1,
+                        color: textColor,
+                        fontWeight: 'medium'
+                    }}
+                >
+                    Selected Ingredients:
+                </Typography>
+                
+                <Box sx={{ 
+                    flex: 1,
+                    overflowY: 'auto',
+                    mb: 2,
+                    border: '1px solid #eee',
+                    borderRadius: '4px',
+                    p: 1
+                }}>
+                    {ingredients.length > 0 ? (
+                        <Box sx={{ 
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            gap: 0.5,
+                            p: 1
+                        }}>
+                            {ingredients.map((item, index) => (
+                                <Chip
+                                    key={`${item.ingredientId}-${index}`}
+                                    label={
+                                        <Box sx={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            maxWidth: isMobile ? '180px' : '200px',
+                                        }}>
+                                            {item.quantity > 1 && (
+                                                <Typography 
+                                                    component="span" 
+                                                    sx={{ 
+                                                        fontSize: isMobile ? '12px' : '14px',
+                                                        mr: 0.5
+                                                    }}
+                                                >
+                                                    ({item.quantity})
+                                                </Typography>
+                                            )}
+                                            <Typography 
+                                                component="span" 
+                                                sx={{ 
+                                                    fontSize: isMobile ? '12px' : '14px',
+                                                    maxWidth: '100%',
+                                                    whiteSpace: 'nowrap',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                }}
+                                                title={item.notes ? `${item.ingredientName} - Note: ${item.notes}` : item.ingredientName}
+                                            >
+                                                {item.ingredientName}
+                                            </Typography>
+                                        </Box>
+                                    }
+                                    onDelete={() => {
+                                        const updatedIngredients = ingredients.filter((_, i) => i !== index);
+                                        handleIngredientsChange(updatedIngredients);
+                                    }}
+                                    sx={{
+                                        backgroundColor: backgroundColor,
+                                        color: textColor,
+                                        m: 0.5,
+                                        height: 'auto',
+                                        padding: '2px',
+                                        width: 'fit-content',
+                                        paddingLeft: '10px',
+                                        marginRight: '10px',
+                                        '& .MuiChip-label': { 
+                                            p: isMobile ? '4px 0' : '6px 0',
+                                            overflow: 'visible' 
+                                        },
+                                        '& .MuiChip-deleteIcon': {
+                                            color: textColor,
+                                            fontSize: isMobile ? '16px' : '18px'
+                                        }
+                                    }}
+                                    size={isMobile ? "small" : "medium"}
+                                />
+                            ))}
+                        </Box>
+                    ) : (
+                        <Typography 
+                            sx={{ 
+                                color: '#777', 
+                                fontStyle: 'italic', 
+                                textAlign: 'center',
+                                p: 2
+                            }}
+                        >
+                            No ingredients selected. Click "Add Ingredient" to add ingredients to your meal.
+                        </Typography>
+                    )}
+                </Box>
+                
+                <Typography 
+                    variant="subtitle1" 
+                    sx={{ 
+                        mb: 1,
+                        color: textColor,
+                        fontWeight: 'medium'
+                    }}
+                >
+                    Available Ingredients:
+                </Typography>
+                
+                <Box sx={{ 
+                    flex: 2,
+                    overflowY: 'auto',
+                    mb: 2,
+                    border: '1px solid #eee',
+                    borderRadius: '4px',
+                    p: 1
+                }}>
+                    <IngredientChips
+                        ingredients={tableData}
+                        selectedIngredients={ingredients}
+                        onIngredientsChange={handleIngredientsChange}
+                    />
+                </Box>
 
-                    <div style={{
-                        position: 'absolute', 
-                        right: '0', 
-                        bottom: '20px',
-                        backgroundColor: 'white',
-                        borderRadius: '4px',
-                    }}>
-                        <Button style={{ marginRight: '5px' }} onClick={() => this.props.closeCallback()}>Cancel</Button>
-                        <StyledSquareButton
-                            onClick={() => this.props.confirmCallback(this.state.mealTitle, this.state.ingredients, this.props.mealId)}>
-                            Save Meal
-                        </StyledSquareButton>
-                    </div>
-                </Card>
+                <Box sx={{
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    borderTop: '1px solid #eee',
+                    pt: 2,
+                    mt: 'auto'
+                }}>
+                    <Button 
+                        variant="outlined"
+                        sx={{ 
+                            mr: 1,
+                            minWidth: '80px',
+                            color: '#666',
+                            borderColor: '#ccc'
+                        }} 
+                        onClick={() => props.closeCallback()}
+                        size={isMobile ? "small" : "medium"}
+                    >
+                        Cancel
+                    </Button>
+                    <StyledSquareButton
+                        sx={{ 
+                            minWidth: isMobile ? '80px' : '100px'
+                        }}
+                        onClick={() => props.confirmCallback(state.mealTitle, state.ingredients, props.mealId)}
+                        size={isMobile ? "small" : "medium"}
+                        disabled={!mealTitle.trim()}
+                    >
+                        Save
+                    </StyledSquareButton>
+                </Box>
+            </Card>
 
-                {
-                    this.state.ingredientModal &&
-                    <Dialog
-                        open={this.state.ingredientModal}
-                        onClose={() => this.handleModalClose('ingredientModal')}>
-                        <IngredientModal
-                            db={db}
-                            closeCallback={() => this.handleModalClose('ingredientModal')}
-                            confirmCallback={this.handleWriteIngredientData}
-                            ingredientId={this.state.ingredientId}
-                            ingredientName={this.state.ingredientName}
-                            category={this.state.category}
-                            notes={this.state.notes}
-                        />
-                    </Dialog>
-                }
-            </div >
-        );
-    }
-}
+            {ingredientModal &&
+                <Dialog
+                    fullScreen={isMobile}
+                    open={ingredientModal}
+                    maxWidth="md"
+                    onClose={() => handleModalClose('ingredientModal')}
+                >
+                    <IngredientModal
+                        db={db}
+                        closeCallback={() => handleModalClose('ingredientModal')}
+                        confirmCallback={handleWriteIngredientData}
+                        ingredientId={state.ingredientId}
+                        ingredientName={state.ingredientName}
+                        category={state.category}
+                        notes={state.notes}
+                        isMobile={isMobile}
+                    />
+                </Dialog>
+            }
+        </Box>
+    );
+};
 
 export default MealModal;

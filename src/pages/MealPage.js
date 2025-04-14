@@ -1,4 +1,4 @@
-import { Dialog, IconButton, Typography, Chip, Box } from '@mui/material';
+import { Dialog, IconButton, Typography, Chip, Box, useMediaQuery, useTheme } from '@mui/material';
 import { Delete, Edit } from '@mui/icons-material';
 import MaterialTable from 'material-table';
 import React from 'react';
@@ -9,9 +9,16 @@ import { StyledAddBox, textColor, backgroundColor } from '../theme/MealPlannerTh
 import SearchIcon from '@mui/icons-material/Search';
 import ClearIcon from '@mui/icons-material/Clear';
 
+const MealPageWrapper = () => {
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+    
+    return <MealPage isMobile={isMobile} />;
+};
+
 class MealPage extends React.Component {
-    constructor() {
-        super();
+    constructor(props) {
+        super(props);
         this.state = {
             user: auth.currentUser,
             mealId: '',
@@ -93,12 +100,20 @@ class MealPage extends React.Component {
     }
 
     renderIngredientChips = (rowData, db) => {
+        const { isMobile } = this.props;
+        
         if (!rowData.ingredients || rowData.ingredients.length === 0) {
             return <span>No ingredients</span>;
         }
 
         return (
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+            <Box sx={{ 
+                display: 'flex', 
+                flexWrap: 'wrap', 
+                gap: 0.5, 
+                maxHeight: isMobile ? '100px' : '150px',
+                overflowY: 'auto'
+            }}>
                 {rowData.ingredients.map((ingredient, index) => (
                     <Chip
                         key={index}
@@ -112,16 +127,17 @@ class MealPage extends React.Component {
                                 {ingredient.ingredientName}
                             </span>
                         }
-                        size="small"
+                        size={isMobile ? "small" : "medium"}
                         sx={{
                             backgroundColor: backgroundColor,
                             color: textColor,
                             margin: '2px',
-                            maxWidth: '150px',
+                            maxWidth: isMobile ? '120px' : '150px',
                             '& .MuiChip-label': {
                                 whiteSpace: 'nowrap',
                                 overflow: 'hidden',
-                                textOverflow: 'ellipsis'
+                                textOverflow: 'ellipsis',
+                                fontSize: isMobile ? '12px' : '14px'
                             }
                         }}
                     />
@@ -139,6 +155,7 @@ class MealPage extends React.Component {
         const db = firebaseDb.database();
         let mealsDbRef = db.ref(`users/${this.state.user.uid}/meals`);
         let tableData = [];
+        const { isMobile } = this.props;
 
         mealsDbRef.on('child_added', function (snapshot) {
             tableData.push({
@@ -149,67 +166,134 @@ class MealPage extends React.Component {
         })
 
         return (
-            <div style={{ padding: '50px' }}>
-                <Container style={{ backgroundColor: 'white', borderRadius: '10px ', padding: '20px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <Typography style={{ padding: '20px', color: textColor }}>Meals</Typography>
-                        <IconButton onClick={() => this.handleMealModal()} size="large">
+            <Box sx={{ 
+                p: isMobile ? 2 : 4,
+                pt: isMobile ? 2 : 4,
+                pb: isMobile ? 6 : 4, // Extra bottom padding on mobile for navigation
+                minHeight: isMobile ? 'calc(100vh - 120px)' : 'calc(100vh - 140px)',
+                boxSizing: 'border-box',
+                overflowX: 'hidden'
+            }}>
+                <Container sx={{ 
+                    backgroundColor: 'white', 
+                    borderRadius: '10px', 
+                    p: isMobile ? 2 : 3,
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column'
+                }}>
+                    <Box sx={{ 
+                        display: 'flex', 
+                        alignItems: 'center',
+                        mb: 2
+                    }}>
+                        <Typography 
+                            variant={isMobile ? "h6" : "h5"} 
+                            sx={{ 
+                                color: textColor,
+                                fontWeight: 'medium',
+                                mr: 2
+                            }}
+                        >
+                            Meals
+                        </Typography>
+                        <IconButton 
+                            onClick={() => this.handleMealModal()} 
+                            size={isMobile ? "medium" : "large"}
+                        >
                             <StyledAddBox sx={{ color: textColor }} />
                         </IconButton>
-                        <Typography style={{ color: textColor }}>Add Meal</Typography>
-                    </div>
-                    <ThemeProvider theme={defaultMaterialTheme}>
-                        <MaterialTable
-                            title={null}
-                            columns={[
-                                { 
-                                    title: 'Meal Title', 
-                                    field: 'mealTitle',
-                                    width: '25%', 
-                                },
-                                {
-                                    title: 'Ingredients', 
-                                    field: 'ingredients', 
-                                    width: '75%', 
-                                    render: (rowData) => this.renderIngredientChips(rowData, db)
-                                },
-                            ]}
-                            data={tableData}
-                            options={{
-                                searching: true,
-                                maxBodyHeight: '80vh',
-                                paging: false,
-                                actionsColumnIndex: -1,
-                                headerStyle: {
-                                    backgroundColor: 'white',
-                                    color: textColor,
-                                    fontWeight: 'bold'
-                                },
-                                rowStyle: {
-                                    color: textColor
-                                },
-                                searchFieldStyle: {
-                                    color: textColor
-                                }
-                            }}
-                            icons={{
-                                Search: SearchIcon,
-                                ResetSearch: ClearIcon
-                            }}
-                            actions={[
-                                {
-                                    icon: () => <Edit sx={{ color: textColor }}/>,
-                                    tooltip: 'Edit',
-                                    onClick: (event, rowData) => this.handleEditMeal(rowData)
-                                },
-                                {
-                                    icon: () => <Delete sx={{ color: textColor }}/>,
-                                    tooltip: 'Delete',
-                                    onClick: (event, rowData) => this.handleDeleteMeal(rowData)
-                                }
-                            ]}
-                        />
-                    </ThemeProvider>
+                        <Typography 
+                            variant={isMobile ? "body2" : "body1"}
+                            sx={{ color: textColor }}
+                        >
+                            Add Meal
+                        </Typography>
+                    </Box>
+                    
+                    <Box sx={{ 
+                        flex: 1,
+                        overflowY: 'auto',
+                        '& .MuiPaper-root': {
+                            boxShadow: 'none'
+                        }
+                    }}>
+                        <ThemeProvider theme={defaultMaterialTheme}>
+                            <MaterialTable
+                                title={null}
+                                columns={[
+                                    { 
+                                        title: 'Meal Title', 
+                                        field: 'mealTitle',
+                                        width: isMobile ? '40%' : '25%',
+                                        cellStyle: {
+                                            fontSize: isMobile ? '14px' : '16px',
+                                            padding: isMobile ? '8px 4px' : '16px 8px'
+                                        }
+                                    },
+                                    {
+                                        title: 'Ingredients', 
+                                        field: 'ingredients', 
+                                        width: isMobile ? '60%' : '75%',
+                                        render: (rowData) => this.renderIngredientChips(rowData, db),
+                                        cellStyle: {
+                                            padding: isMobile ? '8px 4px' : '16px 8px'
+                                        }
+                                    },
+                                ]}
+                                data={tableData}
+                                options={{
+                                    searching: true,
+                                    maxBodyHeight: isMobile ? 'calc(100vh - 230px)' : '80vh',
+                                    paging: false,
+                                    actionsColumnIndex: -1,
+                                    headerStyle: {
+                                        backgroundColor: '#f5f5f5',
+                                        color: textColor,
+                                        fontWeight: 'bold',
+                                        fontSize: isMobile ? '14px' : '16px',
+                                        padding: isMobile ? '8px 4px' : '16px 8px'
+                                    },
+                                    rowStyle: {
+                                        color: textColor
+                                    },
+                                    searchFieldStyle: {
+                                        color: textColor
+                                    },
+                                    actionsCellStyle: {
+                                        padding: isMobile ? '4px' : '8px'
+                                    }
+                                }}
+                                icons={{
+                                    Search: SearchIcon,
+                                    ResetSearch: ClearIcon
+                                }}
+                                actions={[
+                                    {
+                                        icon: () => <Edit sx={{ 
+                                            color: textColor,
+                                            fontSize: isMobile ? 18 : 24
+                                        }}/>,
+                                        tooltip: 'Edit',
+                                        onClick: (event, rowData) => this.handleEditMeal(rowData)
+                                    },
+                                    {
+                                        icon: () => <Delete sx={{ 
+                                            color: textColor,
+                                            fontSize: isMobile ? 18 : 24
+                                        }}/>,
+                                        tooltip: 'Delete',
+                                        onClick: (event, rowData) => this.handleDeleteMeal(rowData)
+                                    }
+                                ]}
+                                localization={{
+                                    header: {
+                                        actions: isMobile ? '' : 'Actions'
+                                    }
+                                }}
+                            />
+                        </ThemeProvider>
+                    </Box>
                 </Container>
 
                 {this.state.mealModal &&
@@ -217,6 +301,7 @@ class MealPage extends React.Component {
                         open={this.state.mealModal}
                         onClose={() => this.handleModalClose('mealModal')}
                         maxWidth={false}
+                        fullScreen={isMobile}
                     >
                         <MealModal
                             db={db}
@@ -225,11 +310,12 @@ class MealPage extends React.Component {
                             mealId={this.state.mealId}
                             mealTitle={this.state.mealTitle}
                             ingredients={this.state.ingredients}
+                            isMobile={isMobile}
                         />
                     </Dialog>}
-            </div>
+            </Box>
         );
     }
 }
 
-export default MealPage;
+export default MealPageWrapper;

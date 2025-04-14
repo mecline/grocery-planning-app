@@ -1,14 +1,21 @@
 import emailjs from '@emailjs/browser';
-import { Button, TextField, Typography, Box, Paper, IconButton, InputAdornment } from '@mui/material';
+import { Button, TextField, Typography, Box, Paper, IconButton, InputAdornment, useMediaQuery, useTheme } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import EmailIcon from '@mui/icons-material/Email';
-import React from 'react';
+import React, { useContext } from 'react';
 import { auth } from '../firebase/firebase';
 import { textColor, backgroundColor } from '../theme/MealPlannerTheme';
 
+const EmailSenderWrapper = (props) => {
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+    
+    return <EmailSender {...props} isMobile={isMobile} />;
+};
+
 class EmailSender extends React.Component {
-    constructor() {
-        super();
+    constructor(props) {
+        super(props);
         this.state = {
             currentUser: auth.currentUser,
             toEmail: auth.currentUser.email ? auth.currentUser.email : '',
@@ -85,27 +92,36 @@ class EmailSender extends React.Component {
 
     render() {
         const { sending, success, error } = this.state;
+        const { isMobile = false } = this.props;
 
         return (
             <Box sx={{ 
-                p: 4, 
-                width: '400px',
+                p: isMobile ? 2 : 4, 
+                width: isMobile ? '95vw' : '400px',
+                maxWidth: '100%',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center'
             }}>
-                <Typography variant="h5" sx={{ mb: 3, color: textColor }}>
+                <Typography 
+                    variant={isMobile ? "h6" : "h5"} 
+                    sx={{ 
+                        mb: isMobile ? 2 : 3, 
+                        color: textColor,
+                        fontWeight: 'bold'
+                    }}
+                >
                     Send Shopping List
                 </Typography>
                 
                 <Paper
                     elevation={0}
                     sx={{
-                        p: 3,
+                        p: isMobile ? 2 : 3,
                         width: '100%',
                         backgroundColor: '#f7f7f7',
                         borderRadius: '8px',
-                        mb: 3
+                        mb: isMobile ? 2 : 3
                     }}
                 >
                     <Box component="form" onSubmit={this.handleEmailSend}>
@@ -117,7 +133,8 @@ class EmailSender extends React.Component {
                             value={this.state.toEmail}
                             onChange={this.handleToEmailChange}
                             required
-                            sx={{ mb: 3 }}
+                            sx={{ mb: isMobile ? 2 : 3 }}
+                            size={isMobile ? "small" : "medium"}
                             InputProps={{
                                 startAdornment: (
                                     <InputAdornment position="start">
@@ -133,9 +150,11 @@ class EmailSender extends React.Component {
                             disabled={sending}
                             fullWidth
                             endIcon={<SendIcon />}
+                            size={isMobile ? "small" : "medium"}
                             sx={{
                                 backgroundColor: backgroundColor,
                                 color: textColor,
+                                py: isMobile ? 1 : 1.5,
                                 '&:hover': {
                                     backgroundColor: backgroundColor,
                                     opacity: 0.9
@@ -173,7 +192,14 @@ class EmailSender extends React.Component {
                     </Box>
                 </Paper>
                 
-                <Typography variant="body2" sx={{ textAlign: 'center', color: 'text.secondary', fontStyle: 'italic' }}>
+                <Typography 
+                    variant="body2" 
+                    sx={{ 
+                        textAlign: 'center', 
+                        color: 'text.secondary', 
+                        fontStyle: 'italic' 
+                    }}
+                >
                     Your shopping list will be sent to the email address provided.
                 </Typography>
             </Box>
@@ -181,4 +207,4 @@ class EmailSender extends React.Component {
     }
 }
 
-export default EmailSender;
+export default EmailSenderWrapper;
