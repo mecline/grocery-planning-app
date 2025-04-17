@@ -5,4 +5,6 @@ and optional notes if you had opted to add those in.
 
 Hosted on GitHub Pages: https://mecline.github.io/grocery-planning-app/
 
-![MealPlanner](https://github.com/user-attachments/assets/12081a0a-6695-4b7a-867d-1d1327140d93)
+![MealPlannerMealPage](https://github.com/user-attachments/assets/be94d42a-e85e-486b-b063-83f8e6529c33)
+
+![MealPlannerListPage](https://github.com/user-attachments/assets/ccf5c6b8-a1aa-4e96-8762-c61ab0b27a7d)
