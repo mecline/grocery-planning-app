@@ -264,10 +264,9 @@ const MealModal = (props) => {
                                                 component="span" 
                                                 sx={{ 
                                                     fontSize: isMobile ? '12px' : '14px',
-                                                    maxWidth: '100%',
+                                                    maxWidth: 'fit-content',
                                                     whiteSpace: 'nowrap',
-                                                    overflow: 'hidden',
-                                                    textOverflow: 'ellipsis',
+                                                    marginRight: '10px'
                                                 }}
                                                 title={item.notes ? `${item.ingredientName} - Note: ${item.notes}` : item.ingredientName}
                                             >
@@ -287,7 +286,7 @@ const MealModal = (props) => {
                                         padding: '2px',
                                         width: 'fit-content',
                                         paddingLeft: '10px',
-                                        marginRight: '10px',
+                                        marginRight: '20px',
                                         '& .MuiChip-label': { 
                                             p: isMobile ? '4px 0' : '6px 0',
                                             overflow: 'visible' 

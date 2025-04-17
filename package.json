@@ -2,7 +2,7 @@
   "name": "grocery-planning-app",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://mecline.github.io/grocery-plannig-app",
+  "homepage": "https://mecline.github.io/grocery-planning-app",
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
     "@emotion/react": "^11.9.3",

@@ -1,13 +1,19 @@
-import { CheckBox, CheckBoxOutlineBlank } from '@mui/icons-material';
-import { Container, Dialog, IconButton, Typography, Paper, Tooltip, Box, useMediaQuery, useTheme } from '@mui/material';
+import { CheckBox, CheckBoxOutlineBlank, DeleteOutline } from '@mui/icons-material';
+import { Container, Dialog, IconButton, Typography, Paper, Tooltip, Box, useMediaQuery, useTheme, Button } from '@mui/material';
 import React from 'react';
 import EmailSender from '../components/EmailSender.js';
 import ListModal from '../components/ListModal.js';
+import QuickAddItems from '../components/QuickAddItems.js';
+import PantryItems from '../components/PantryItems.js';
 import { auth, firebaseDb } from '../firebase/firebase.js';
-import { backgroundColor, textColor } from '../theme/MealPlannerTheme';
+import { backgroundColor, StyledAddBox, textColor } from '../theme/MealPlannerTheme';
 import EmailIcon from '@mui/icons-material/Email';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
+import ClearAllIcon from '@mui/icons-material/ClearAll';
 import { List, ListItem, ListItemText } from '@mui/material';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
 
 const ListPageWrapper = () => {
     const theme = useTheme();
@@ -23,7 +29,9 @@ class ListPage extends React.Component {
             user: auth.currentUser,
             notesEnabled: false,
             sendEmailModal: false,
-            listModal: false
+            listModal: false,
+            clearConfirmOpen: false,
+            refreshKey: 0 // Add a refresh key to force re-render when needed
         };
     }
 
@@ -89,6 +97,106 @@ class ListPage extends React.Component {
         return newList;
     }
 
+    // Force a refresh of the component
+    refreshList = () => {
+        this.setState(prevState => ({ refreshKey: prevState.refreshKey + 1 }));
+    }
+
+    // Handle adding pantry items to the shopping list
+    handleAddPantryItems = async (items) => {
+        if (!items || items.length === 0) return;
+        
+        const user = this.state.user;
+        
+        try {
+            // Get current selected meals to preserve them
+            let selectedMeals = [];
+            const selectedMealsRef = firebaseDb.database().ref(`users/${user.uid}/selectedMeals`);
+            await selectedMealsRef.once('value', snapshot => {
+                if (snapshot.exists()) {
+                    snapshot.forEach(child => {
+                        selectedMeals.push(child.val());
+                    });
+                }
+            });
+            
+            // Make sure standalone_items is in the selected meals
+            if (!selectedMeals.includes('standalone_items')) {
+                selectedMeals.push('standalone_items');
+            }
+            
+            // Get current standalone items
+            const standaloneItemsRef = firebaseDb.database().ref(`users/${user.uid}/meals/standalone_items`);
+            let existingItems = [];
+            
+            await standaloneItemsRef.once('value', snapshot => {
+                if (snapshot.exists() && snapshot.val().ingredients) {
+                    existingItems = snapshot.val().ingredients;
+                }
+            });
+            
+            // Merge existing items with new items
+            items.forEach(newItem => {
+                const existingItemIndex = existingItems.findIndex(item => 
+                    item.ingredientId === newItem.ingredientId);
+                
+                if (existingItemIndex >= 0) {
+                    // Update existing item quantity
+                    existingItems[existingItemIndex].quantity += newItem.quantity;
+                } else {
+                    // Add new item
+                    existingItems.push(newItem);
+                }
+            });
+            
+            // Update standalone items
+            await standaloneItemsRef.update({
+                mealTitle: "Standalone Items",
+                ingredients: existingItems
+            });
+            
+            // Update selected meals
+            await firebaseDb.database().ref(`users/${user.uid}`).update({
+                selectedMeals: selectedMeals
+            });
+            
+            // Refresh the list
+            this.refreshList();
+        } catch (error) {
+            console.error("Error adding pantry items:", error);
+        }
+    }
+
+    // Open clear list confirmation dialog
+    handleClearListClick = () => {
+        this.setState({ clearConfirmOpen: true });
+    }
+
+    // Close clear list confirmation dialog
+    handleClearListCancel = () => {
+        this.setState({ clearConfirmOpen: false });
+    }
+
+    // Clear the shopping list
+    handleClearList = async () => {
+        try {
+            const user = this.state.user;
+            
+            // Clear selected meals
+            await firebaseDb.database().ref(`users/${user.uid}`).update({
+                selectedMeals: []
+            });
+            
+            // Refresh the list
+            this.refreshList();
+            
+            // Close the dialog
+            this.setState({ clearConfirmOpen: false });
+        } catch (error) {
+            console.error("Error clearing shopping list:", error);
+        }
+    }
+
     render() {
         let db = firebaseDb.database();
         let selectedDbRef = db.ref(`users/${this.state.user.uid}/selectedMeals`);
@@ -98,25 +206,45 @@ class ListPage extends React.Component {
         let mealTitles = [];
         const { isMobile } = this.props;
 
-        selectedDbRef.on('child_added', (snapshot) => {
-            selectedMeals.push(snapshot.val());
+        selectedDbRef.on('value', (snapshot) => {
+            // This ensures we get an updated list of selected meals
+            selectedMeals = [];
+            if (snapshot.exists()) {
+                snapshot.forEach((childSnapshot) => {
+                    selectedMeals.push(childSnapshot.val());
+                });
+            }
         });
 
         // Getting the meal object from the user's meal collection if the meal is selected
         // Adds meal to shoppingList if it is found, so shoppingList now can access ingredients
-        firebaseDb.database().ref(`users/${this.state.user.uid}/meals`).on('child_added', (snap) => {
-            let meal = snap.key;
-            if (~selectedMeals.indexOf(meal)) {
-                mealTitles.push(snap.val().mealTitle)
-                shoppingList.push(snap.val())
+        db.ref(`users/${this.state.user.uid}/meals`).on('value', (snapshot) => {
+            shoppingList = [];
+            mealTitles = [];
+            
+            if (snapshot.exists()) {
+                snapshot.forEach((childSnapshot) => {
+                    const meal = childSnapshot.key;
+                    if (selectedMeals.includes(meal)) {
+                        // Don't display "Standalone Items" in the meal titles list
+                        if (meal !== 'standalone_items' || childSnapshot.val().mealTitle !== "Standalone Items") {
+                            mealTitles.push(childSnapshot.val().mealTitle);
+                        }
+                        shoppingList.push(childSnapshot.val());
+                    }
+                });
             }
-        })
+        });
 
-        shoppingList.map((listItem) => {
-            return listItem.ingredients && listItem.ingredients.forEach((item) => {
-                ingredientsList.push(item);
-            })
-        })
+        // Extract all ingredients from the shopping list meals
+        ingredientsList = [];
+        shoppingList.forEach((listItem) => {
+            if (listItem.ingredients && Array.isArray(listItem.ingredients)) {
+                listItem.ingredients.forEach((item) => {
+                    ingredientsList.push(item);
+                });
+            }
+        });
 
         ingredientsList = this.handleDuplicateIngredients(ingredientsList);
         
@@ -136,7 +264,7 @@ class ListPage extends React.Component {
                 pb: isMobile ? 6 : 3, // Extra padding at bottom for mobile navigation
                 minHeight: isMobile ? 'calc(100vh - 120px)' : 'calc(100vh - 140px)',
                 boxSizing: 'border-box'
-            }}>
+            }} key={this.state.refreshKey}>
                 <Container sx={{ 
                     backgroundColor: 'white', 
                     borderRadius: '10px', 
@@ -161,11 +289,35 @@ class ListPage extends React.Component {
                             display: 'flex', 
                             flexDirection: isMobile ? 'column' : 'row',
                             alignItems: isMobile ? 'flex-start' : 'center', 
-                            mb: 2
+                            mb: 2,
+                            flexWrap: 'wrap'
                         }}>
+                            {/* Add Meal Button - Moved before Enable Notes */}
+                            <Box sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                mr: 3,
+                                mb: isMobile ? 1 : 0
+                            }}>
+                                <IconButton 
+                            onClick={() => this.handleSelectMeals()} 
+                            size={isMobile ? "medium" : "large"}
+                        >
+                            <StyledAddBox sx={{ color: textColor }} />
+                        </IconButton>
+                        <Typography 
+                            variant={isMobile ? "body2" : "body1"}
+                            sx={{ color: textColor }}
+                        >
+                            Add Meal(s) To List
+                        </Typography>
+                            </Box>
+                            
+                            {/* Enable Notes Checkbox */}
                             <Box sx={{ 
                                 display: 'flex', 
                                 alignItems: 'center',
+                                mr: 3,
                                 mb: isMobile ? 1 : 0
                             }}>
                                 <Tooltip title={this.state.notesEnabled ? "Disable Notes" : "Enable Notes"}>
@@ -184,11 +336,13 @@ class ListPage extends React.Component {
                                 </Typography>
                             </Box>
                             
+                            {/* Action Buttons */}
                             <Box sx={{ 
                                 display: 'flex',
                                 ml: isMobile ? 0 : 'auto',
                                 mt: isMobile ? 1 : 0
                             }}>
+                                
                                 <Tooltip title="Send List by Email">
                                     <IconButton 
                                         onClick={() => this.handleEmailSend()} 
@@ -198,18 +352,21 @@ class ListPage extends React.Component {
                                         <EmailIcon style={{ color: textColor }} />
                                     </IconButton>
                                 </Tooltip>
-                                
-                                <Tooltip title="Add Meals to List">
+
+                                <Tooltip title="Clear Shopping List">
                                     <IconButton 
-                                        onClick={() => this.handleSelectMeals()}
+                                        onClick={this.handleClearListClick} 
+                                        sx={{ mr: 1 }}
                                         size={isMobile ? "medium" : "large"}
+                                        disabled={ingredientsList.length === 0}
                                     >
-                                        <AddCircleIcon style={{ color: textColor }} />
+                                        <ClearAllIcon style={{ color: ingredientsList.length === 0 ? '#ccc' : textColor }} />
                                     </IconButton>
                                 </Tooltip>
                             </Box>
                         </Box>
                         
+                        {/* Selected Meals Section - Moved before Pantry and Quick Add */}
                         <Typography 
                             variant={isMobile ? "subtitle1" : "h6"} 
                             sx={{ mb: 1 }}
@@ -219,7 +376,7 @@ class ListPage extends React.Component {
                         <Box sx={{ 
                             display: 'flex', 
                             flexWrap: 'wrap', 
-                            mb: 2
+                            mb: 3
                         }}>
                             {mealTitles.length > 0 ? (
                                 mealTitles.map((meal) => (
@@ -253,6 +410,20 @@ class ListPage extends React.Component {
                                 </Typography>
                             )}
                         </Box>
+                        
+                        {/* Add Pantry Items component - Default collapsed */}
+                        <PantryItems 
+                            onItemsSelected={this.handleAddPantryItems} 
+                            isMobile={isMobile} 
+                            defaultExpanded={false}
+                        />
+                        
+                        {/* Add Quick Add Items component - Default collapsed */}
+                        <QuickAddItems 
+                            onItemAdded={this.refreshList} 
+                            isMobile={isMobile}
+                            defaultExpanded={true}
+                        />
                     </Box>
                     
                     <Box sx={{ 
@@ -369,6 +540,56 @@ class ListPage extends React.Component {
                         )}
                     </Box>
                 </Container>
+
+                {/* Clear List Confirmation Dialog */}
+                <Dialog
+                    open={this.state.clearConfirmOpen}
+                    onClose={this.handleClearListCancel}
+                    PaperProps={{
+                        sx: { 
+                            borderRadius: '8px',
+                            width: isMobile ? '90%' : '400px'
+                        }
+                    }}
+                >
+                    <DialogTitle sx={{ 
+                        color: textColor, 
+                        fontSize: isMobile ? '18px' : '20px',
+                        pt: 3
+                    }}>
+                        Clear Shopping List
+                    </DialogTitle>
+                    <DialogContent>
+                        <Typography variant="body1">
+                            Are you sure you want to clear your entire shopping list? This will remove all selected meals and items.
+                        </Typography>
+                        <Typography variant="body2" sx={{ mt: 1, color: 'text.secondary' }}>
+                            This action cannot be undone.
+                        </Typography>
+                    </DialogContent>
+                    <DialogActions sx={{ p: 2 }}>
+                        <Button 
+                            onClick={this.handleClearListCancel}
+                            sx={{ color: 'text.secondary' }}
+                        >
+                            Cancel
+                        </Button>
+                        <Button 
+                            onClick={this.handleClearList}
+                            variant="contained" 
+                            color="error"
+                            sx={{ 
+                                minWidth: '80px',
+                                bgcolor: '#d32f2f',
+                                '&:hover': {
+                                    bgcolor: '#b71c1c'
+                                }
+                            }}
+                        >
+                            Clear List
+                        </Button>
+                    </DialogActions>
+                </Dialog>
 
                 {this.state.listModal &&
                     <Dialog

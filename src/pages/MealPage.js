@@ -1,4 +1,4 @@
-import { Dialog, IconButton, Typography, Chip, Box, useMediaQuery, useTheme } from '@mui/material';
+import { Dialog, IconButton, Typography, Chip, Box, useMediaQuery, useTheme, Button, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 import { Delete, Edit } from '@mui/icons-material';
 import MaterialTable from 'material-table';
 import React from 'react';
@@ -26,7 +26,9 @@ class MealPage extends React.Component {
             newMealTitle: '',
             ingredients: [],
             testList: null,
-            isEditing: false
+            isEditing: false,
+            deleteConfirmOpen: false,
+            mealToDelete: null
         };
     }
 
@@ -73,20 +75,39 @@ class MealPage extends React.Component {
         });
     }
 
-    handleDeleteMeal = (rowData) => {
+    openDeleteConfirmation = (rowData) => {
+        this.setState({
+            deleteConfirmOpen: true,
+            mealToDelete: rowData
+        });
+    }
+
+    closeDeleteConfirmation = () => {
+        this.setState({
+            deleteConfirmOpen: false,
+            mealToDelete: null
+        });
+    }
+
+    handleDeleteMeal = () => {
+        const { mealToDelete } = this.state;
+        if (!mealToDelete) return;
+
         let selectedMealIds = [];
-        firebaseDb.database().ref(`users/${this.state.user.uid}/meals/${rowData.mealId}`).remove();
+        firebaseDb.database().ref(`users/${this.state.user.uid}/meals/${mealToDelete.mealId}`).remove();
 
         firebaseDb.database().ref(`users/${this.state.user.uid}/selectedMeals`).on('child_added', (snap) => {
             let selectedMeal = snap.val();
-            if (selectedMeal !== rowData.mealId) {
+            if (selectedMeal !== mealToDelete.mealId) {
                 selectedMealIds.push(selectedMeal);
             }
         })
 
         firebaseDb.database().ref(`users/${this.state.user.uid}`).update({
             selectedMeals: selectedMealIds
-        })
+        });
+
+        this.closeDeleteConfirmation();
     }
 
     handleEditMeal = (rowData) => {
@@ -96,7 +117,7 @@ class MealPage extends React.Component {
             mealTitle: rowData.mealTitle,
             ingredients: rowData.ingredients,
             mealModal: true
-        })
+        });
     }
 
     renderIngredientChips = (rowData, db) => {
@@ -136,7 +157,8 @@ class MealPage extends React.Component {
                             '& .MuiChip-label': {
                                 whiteSpace: 'nowrap',
                                 overflow: 'hidden',
-                                textOverflow: 'ellipsis',
+                                width: 'fit-content',
+                                textOverflow: 'initial',
                                 fontSize: isMobile ? '12px' : '14px'
                             }
                         }}
@@ -156,6 +178,7 @@ class MealPage extends React.Component {
         let mealsDbRef = db.ref(`users/${this.state.user.uid}/meals`);
         let tableData = [];
         const { isMobile } = this.props;
+        const { deleteConfirmOpen, mealToDelete } = this.state;
 
         mealsDbRef.on('child_added', function (snapshot) {
             tableData.push({
@@ -283,7 +306,7 @@ class MealPage extends React.Component {
                                             fontSize: isMobile ? 18 : 24
                                         }}/>,
                                         tooltip: 'Delete',
-                                        onClick: (event, rowData) => this.handleDeleteMeal(rowData)
+                                        onClick: (event, rowData) => this.openDeleteConfirmation(rowData)
                                     }
                                 ]}
                                 localization={{
@@ -295,6 +318,59 @@ class MealPage extends React.Component {
                         </ThemeProvider>
                     </Box>
                 </Container>
+
+                {/* Delete Confirmation Dialog */}
+                <Dialog
+                    open={deleteConfirmOpen}
+                    onClose={this.closeDeleteConfirmation}
+                    PaperProps={{
+                        sx: { 
+                            borderRadius: '8px',
+                            width: isMobile ? '90%' : '400px'
+                        }
+                    }}
+                >
+                    <DialogTitle sx={{ 
+                        color: textColor, 
+                        fontSize: isMobile ? '18px' : '20px',
+                        pt: 3
+                    }}>
+                        Confirm Delete
+                    </DialogTitle>
+                    <DialogContent>
+                        <Typography variant="body1">
+                            Are you sure you want to delete{' '}
+                            <span style={{ fontWeight: 'bold' }}>
+                                {mealToDelete?.mealTitle}
+                            </span>?
+                        </Typography>
+                        <Typography variant="body2" sx={{ mt: 1, color: textColor }}>
+                            This action cannot be undone. The meal and its ingredients will be removed from your meal planner.
+                        </Typography>
+                    </DialogContent>
+                    <DialogActions sx={{ p: 2 }}>
+                        <Button 
+                            onClick={this.closeDeleteConfirmation}
+                            sx={{ color: 'text.secondary' }}
+                        >
+                            Cancel
+                        </Button>
+                        <Button 
+                            onClick={this.handleDeleteMeal}
+                            variant="contained" 
+                            color="error"
+                            sx={{ 
+                                minWidth: '80px',
+                                bgcolor: '#d32f2f',
+                                '&:hover': {
+                                    bgcolor: '#b71c1c'
+                                }
+                            }}
+                        >
+                            Delete
+                        </Button>
+                    </DialogActions>
+                </Dialog>
 
                 {this.state.mealModal &&
                     <Dialog
